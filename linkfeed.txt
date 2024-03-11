@@ -1,0 +1,7 @@
+date: 2024-03-3
+
+Why is it cool?
+Your profile and feed is located at your website link, so friends can go there and view your feed – it is all contained in YOUR space.
+By only doing links, it encourages content with depth enough to post to your static site (creating the html and all that).
+It integrates with all the existing open protocols.
+Add social features to your personal website.
