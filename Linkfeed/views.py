@@ -23,3 +23,5 @@ def feed(request):
 
     return HttpResponse(feed_html)
     return HttpResponse(feed_html)
+
+# This is the test code for commit
