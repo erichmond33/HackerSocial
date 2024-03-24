@@ -1,2 +1,2 @@
 # Linkfeed
-a
+a test
