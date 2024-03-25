@@ -52,6 +52,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "Django.urls"
 
+AUTH_USER_MODEL='Linkfeed.User'
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
