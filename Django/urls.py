@@ -15,10 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from . import views
+from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("feed/", views.feed, name="feed")
+    path('', lambda request: redirect('Linkfeed/')),
+    path("Linkfeed/", include("Linkfeed.urls")),
 ]
+from django.contrib import admin
+from django.urls import path, include
+from django.shortcuts import redirect
