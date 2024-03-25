@@ -1,0 +1,217 @@
+{% extends "Linkfeed/layouts.html" %}
+{% load static %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{% static 'Linkfeed/post.css' %}">
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Move the "Posted by Lime" section outside the card and center it -->
+            <div class="post-header text-center mb-3">
+                <h3>Posted by {{ post.user.username }}:</h3>
+            </div>
+            <div class="card post-container">
+                <div class="card-body">
+                    <!-- Keep the title inside the card -->
+                    <h2 class="post-title">
+                        {% if post.title %}
+                            {{ post.title }}
+                        {% else %}
+                            Untitled
+                        {% endif %}
+                    </h2>
+                    <!-- Move the post body inside the card -->
+                    <div class="post-body post-body-border">
+                        {{ post.body|linebreaks }}
+                    </div>
+                    <!-- Add line between post body and comments -->
+                    <hr>
+                    <!-- Comments dropdown -->
+                    <div id="commentsDropdown" class="comments-dropdown comment-border" style="display: none;">
+                        <!-- Render comments here -->
+                        <div class="scrollable-comments">
+                            {% for comment in post.comments.all %}
+                                <div class="comment-box">
+                                    <p id="comment-username" class="comment-username" style="cursor: pointer;">Posted by: {{ comment.user.username }} - {{ comment.timestamp }}</p>
+                                    <p>{{ comment.body }}</p>
+                                    <!-- Add delete button for comment -->
+                                    {% if request.user == post.user or request.user == comment.user %}
+                                        <button data-comment-id="{{ comment.id }}" class="delete-comment-btn btn btn-danger">Delete</button>
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <p>No comments yet.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="likes-text">
+                        Likes: {{ total_likes }}
+                        <!-- Button to toggle the comments dropdown -->
+                        <button class="btn btn-primary" onclick="toggleComments()">Show Comments</button>
+                        <!-- Button to toggle the add comment popup -->
+                        <button class="btn btn-info" onclick="toggleAddCommentPopup()">Add Comment</button>
+                        
+                        <!-- Button to toggle the edit post popup -->
+                        {% if request.user == post.user %}
+                            <button class="btn btn-secondary" onclick="toggleEditPostPopup()">Edit Post</button>
+                        {% endif %}
+                        <div class="row justify-content-end">
+                            <div class="col-auto">
+                              <form action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
+                                {% csrf_token %}
+                                {% if liked %}
+                                  <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-warning btn-sm">Unlike</button> 
+                                {% else %}
+                                  <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-outline-primary btn-sm">Like</button>
+                                {% endif %}
+                              </form>
+                            </div>
+                          </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile and Feed buttons -->
+<div class="profile-feed-buttons">
+    <button class="btn btn-success profile-button" onclick="redirectToProfile()">Profile</button>
+    <button class="btn btn-primary feed-button" onclick="redirectToFeed()">Feed</button>
+</div>
+
+<!-- Edit post popup form -->
+<div id="editPostPopup" class="modal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Post</h5>
+                <button type="button" class="close" onclick="toggleEditPostPopup()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editPostForm" method="post" action="{% url 'edit_post' post.id %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="post_title">Title:</label>
+                        <input type="text" class="form-control" name="post_title" value="{{ post.title }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="post_body">Body:</label>
+                        <textarea class="form-control" name="post_body" rows="10">{{ post.body }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add comment popup form -->
+<div id="addCommentPopup" class="modal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Comment</h5>
+                <button type="button" class="close" onclick="toggleAddCommentPopup()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addCommentForm" method="post" action="{% url 'add_comment' post.id %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="comment_body">Comment:</label>
+                        <textarea class="form-control" name="comment_body" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript to toggle comments dropdown and delete comments -->
+<script>
+    function toggleComments() {
+        var dropdown = document.getElementById("commentsDropdown");
+        if (dropdown.style.display === "none" || dropdown.style.display === "") {
+            dropdown.style.display = "block";
+        } else {
+            dropdown.style.display = "none";
+        }
+    }
+
+    // Function to redirect to profile page
+    function redirectToProfile() {
+        window.location.href = "{% url 'profile' %}";
+    }
+
+    // Function to redirect to feed page
+    function redirectToFeed() {
+        window.location.href = "{% url 'feed' %}";
+    }
+
+    // Function to handle hover and click effects for comment username
+    var commentUsernames = document.querySelectorAll('.comment-username');
+    commentUsernames.forEach(username => {
+        username.addEventListener('mouseover', function() {
+            this.style.textDecoration = 'underline';
+        });
+
+        username.addEventListener('mouseout', function() {
+            this.style.textDecoration = 'none';
+        });
+
+        username.addEventListener('click', function() {
+            var usernameText = this.innerText.split(":")[1].trim(); // Extracting the username from the text after the colon
+            usernameText = usernameText.replace("Posted by", "").trim(); // Remove "Posted by" part
+            var parts = usernameText.split('-'); // Splitting
+            var cleanUsername = parts[0].trim(); // Extracting the clean username part
+            var profileURL = "/Linkfeed/profile/" + cleanUsername.replace(/\s+/g, '-').toLowerCase();
+            window.location.href = profileURL; // Redirecting to the profile page of the commenter
+        });
+    });
+
+    // Function to toggle edit post popup
+    function toggleEditPostPopup() {
+        var popup = document.getElementById("editPostPopup");
+        if (popup.style.display === "none") {
+            popup.style.display = "block";
+        } else {
+            popup.style.display = "none";
+        }
+    }
+
+    // Function to toggle add comment popup
+    function toggleAddCommentPopup() {
+        var popup = document.getElementById("addCommentPopup");
+        if (popup.style.display === "none") {
+            popup.style.display = "block";
+        } else {
+            popup.style.display = "none";
+        }
+    }
+
+    // Function to handle delete comment
+    var deleteButtons = document.querySelectorAll('.delete-comment-btn');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            var confirmation = confirm("Are you sure you want to delete this comment?");
+            if (confirmation) {
+                var commentId = this.getAttribute('data-comment-id');
+                // Perform deletion logic here, such as sending an AJAX request to delete the comment
+                // For demonstration purposes, let's assume the comment is deleted immediately without AJAX
+                var commentBox = this.closest('.comment-box');
+                commentBox.remove(); // Remove the comment box from the DOM
+            }
+        });
+    });
+
+</script>
+
+{% endblock body %}

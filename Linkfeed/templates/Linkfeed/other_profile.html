@@ -1,0 +1,114 @@
+{% extends "Linkfeed/layouts.html" %}
+{% load static %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{% static 'Linkfeed/profile.css' %}">
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2 class="text-center mb-4">User Profile</h2>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Name: {{ profile.user.username }}</h5>
+                    <p class="card-text">Bio: (Add bio information here)</p>
+                    <div class="row">
+                        <div class="col">
+                            <p id="followers-link" class="card-text text-center" style="cursor: pointer;">Followers: {{ profile.follower.count }}</p>
+                        </div>
+                        <div class="col">
+                            <p id="following-link" class="card-text text-center" style="cursor: pointer;">Following: {{ profile.following.count }}</p>
+                        </div>
+                    </div>
+                    <!-- Follow button -->
+                    {% if request.user != profile.user %}
+                        {% if request.user in profile.follower.all %}
+                            <form action="{% url 'follow_profile' profile.user.username%}" method="POST" class="mt-3">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Unfollow</button>
+                            </form>
+                        {% else %}
+                            <form action="{% url 'follow_profile' profile.user.username %}" method="POST" class="mt-3">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">Follow</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                    <h5 class="card-title">Posts</h5>
+                    <div class="list-group list-group-flush">
+                        <!-- Iterate over each post -->
+                        {% for post in posts %}
+                        <a href="{% url 'post' post.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    {% if post.title %}
+                                    <h6 class="mb-0">{{ post.title }}</h6>
+                                    {% else %}
+                                    <h6 class="mb-0">Untitled</h6>
+                                    {% endif %}
+                                    <p class="mb-0 text-muted">Likes: {{ post.total_likes }}</p>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile and Feed buttons -->
+<div class="fixed-bottom mb-3 ml-3">
+    <button class="btn btn-success profile-button" onclick="redirectToProfile()">Profile</button>
+    <button class="btn btn-primary feed-button" onclick="redirectToFeed()">Feed</button>
+</div>
+
+<!-- JavaScript to redirect to profile and feed pages -->
+<script>
+    // Function to redirect to profile page
+    function redirectToProfile() {
+        window.location.href = "{% url 'profile' %}";
+    }
+
+    // Function to redirect to feed page
+    function redirectToFeed() {
+        window.location.href = "{% url 'feed' %}";
+    }
+
+    // Function to handle hover and click effects for followers link
+    var followersLink = document.getElementById('followers-link');
+    followersLink.addEventListener('mouseover', function() {
+        this.style.textDecoration = 'underline';
+    });
+
+    followersLink.addEventListener('mouseout', function() {
+        this.style.textDecoration = 'none';
+    });
+
+    followersLink.addEventListener('click', function() {
+        window.location.href = "{% url 'followers' profile.user.username %}";
+    });
+
+    // Function to handle hover and click effects for following link
+    var followingLink = document.getElementById('following-link');
+    followingLink.addEventListener('mouseover', function() {
+        this.style.textDecoration = 'underline';
+    });
+
+    followingLink.addEventListener('mouseout', function() {
+        this.style.textDecoration = 'none';
+    });
+
+    followingLink.addEventListener('click', function() {
+        window.location.href = "{% url 'following' profile.user.username %}";
+    });
+</script>
+
+{% endblock body %}

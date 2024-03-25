@@ -1,27 +1,23 @@
-"""
-URL configuration for Django project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+from django.urls import path
 from django.contrib import admin
+from Linkfeed import views
+
 from django.urls import path, include
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path('', lambda request: redirect('Linkfeed/')),
-    path("Linkfeed/", include("Linkfeed.urls")),
+    path("", views.index, name="index"),
+    path("login", views.login_view, name="login"),
+    path("logout", views.logout_view, name="logout"),
+    path("register", views.register, name="register"),
+    path("post", views.post, name="post"),
+    path("following", views.following, name="following"),
+    path('admin/', admin.site.urls),    
+    # API Routes
+    path("send", views.send, name="send"),
+    path("feed", views.view_feed, name="view_feed"),
+    path("profile/<str:username>", views.profile, name="profile"),
+    path("profile_data/<str:username>", views.profile_data, name="profile_data"),
+    path("follow", views.follow, name="follow"),
+    path("edit/<int:post_id>", views.edit, name="edit"),
+    path("like/<int:post_id>", views.like, name="like"),
 ]
-from django.contrib import admin
-from django.urls import path, include
-from django.shortcuts import redirect

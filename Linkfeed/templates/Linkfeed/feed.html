@@ -1,0 +1,83 @@
+{% extends "Linkfeed/layouts.html" %}
+{% load static %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{% static 'Linkfeed/feed.css' %}">
+{% endblock %}
+
+{% block body %}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2 class="text-center mb-4">Feed</h2>
+            <div class="card">
+                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                    <h5 class="card-title">Posts</h5>
+                    <div class="list-group list-group-flush">
+                        {% if posts %}
+                            <!-- Iterate over each post -->
+                            {% for post in posts %}
+                            <a href="{% url 'post' post.id %}" class="list-group-item list-group-item-action post-container">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        {% if post.title %}
+                                        <h6 class="mb-0">{{ post.title }}</h6>
+                                        {% else %}
+                                        <h6 class="mb-0">Untitled</h6>
+                                        {% endif %}
+                                        <p class="mb-0 text-muted">Likes: {{ post.total_likes }}</p>
+                                        <!-- Add a class to the paragraph containing the username -->
+                                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted posted-by">Posted by: {{ post.user.username }}</p>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <p>No posts available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile button -->
+<div class="fixed-bottom mb-3 ml-3">
+    <a href="{% url 'profile' %}" class="btn btn-success">Profile</a>
+</div>
+
+<!-- JavaScript to handle the click event -->
+<!-- JavaScript to handle the click event -->
+<script>
+    // Iterate over each post and add click event listener to the "Posted by" paragraph
+    {% for post in posts %}
+        var postContainer = document.querySelector("#posted-by-{{ post.id }}").closest('.post-container');
+
+        document.getElementById("posted-by-{{ post.id }}").addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent the default behavior of clicking the link
+            var username = this.textContent.split(":")[1].trim(); // Extract username from the paragraph text
+            var profileURL = "/Linkfeed/profile/" + username; // Construct profile URL
+            window.location.href = profileURL; // Redirect to the profile page
+            postContainer.classList.add("disabled"); // Disable post container
+            setTimeout(function() {
+                postContainer.classList.remove("disabled"); // Re-enable post container after a delay
+            }, 1000); // Adjust the delay as needed
+        });
+
+        // Add hover effect
+        document.getElementById("posted-by-{{ post.id }}").addEventListener("mouseover", function() {
+            this.style.textDecoration = "underline"; // Underline on hover
+            postContainer.classList.add("disabled"); // Disable post container
+        });
+
+        document.getElementById("posted-by-{{ post.id }}").addEventListener("mouseout", function() {
+            this.style.textDecoration = "none"; // Remove underline on mouseout
+            postContainer.classList.remove("disabled"); // Re-enable post container
+        });
+    {% endfor %}
+</script>
+
+
+{% endblock body %}

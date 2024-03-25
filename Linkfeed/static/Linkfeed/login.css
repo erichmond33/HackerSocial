@@ -1,0 +1,25 @@
+/* styles.css */
+.container-fluid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.form-container {
+    background-color: #8b8a8a77;
+    padding: 40px; /* Increased padding */
+    border-radius: 8px;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1); /* Increased box shadow */
+    width: 400px; /* Added fixed width */
+    max-width: 80%; /* Added max-width */
+}
+
+.form-group {
+    margin-bottom: 20px; /* Increased margin */
+}
+
+.form-control {
+    width: 100%;
+}
+

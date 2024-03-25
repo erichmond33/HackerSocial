@@ -1,0 +1,23 @@
+ /* Add any custom styles here */
+        /* If you have any specific styles for the feed page, add them here */
+body {
+    background-color: #f2f2f2;
+
+}
+
+ /* Style for the paragraph when hovered */
+ .posted-by:hover {
+    cursor: pointer;
+    color: green; /* Change color to indicate it's clickable */
+}
+
+/* Style for the paragraph when clicked */
+.posted-by.clicked {
+    color: red; /* Change color to indicate it's clicked */
+}
+
+/* Style for the list-group-item container */
+.post-container.disabled {
+    pointer-events: none; /* Disable pointer events */
+    opacity: 0.5; /* Reduce opacity to visually indicate it's disabled */
+}

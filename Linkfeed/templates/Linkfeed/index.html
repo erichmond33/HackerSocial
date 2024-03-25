@@ -1,0 +1,37 @@
+{% extends "Linkfeed/layouts.html" %}
+{% load static %}
+
+{% block body %}
+<h1>Welcome to the Index Page</h1>
+<a href="{% url 'logout' %}">Log Out</a>
+{% if auth_token %}
+<h2>Copy the Iframe Code:</h2>
+<textarea id="iframeCode" rows="4" cols="50">
+    <iframe src="http://127.0.0.1:8000/Linkfeed/profile/?token={{ auth_token }}" width="600" height="400" frameborder="0"></iframe>
+</textarea>
+<br>
+<button onclick="copyIframeCode()">Copy Iframe Code</button>
+
+<h2>Preview:</h2>
+<div id="iframePreview">
+    <iframe src="http://127.0.0.1:8000/Linkfeed/profile/?token={{ auth_token }}" width="600" height="400" frameborder="0"></iframe>
+</div>
+
+<form action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+</form>
+
+{% else %}
+<p>No authentication token available.</p>
+{% endif %}
+
+<script>
+function copyIframeCode() {
+    var textarea = document.getElementById("iframeCode");
+    textarea.select();
+    document.execCommand("copy");
+    alert("Iframe code copied to clipboard!");
+}
+</script>
+{% endblock %}

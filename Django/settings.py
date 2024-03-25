@@ -23,7 +23,7 @@ X_FRAME_OPTIONS = 'ALLOWALL'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-l4p+leivf2)ww%r0)9f@m_2i@08_8b&gp=$b^t6bp@ty-j_!jp"
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY WARNING: don't run with debug turned on in production!git
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
@@ -53,6 +53,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "Django.urls"
 
+AUTH_USER_MODEL='Linkfeed.User'
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
