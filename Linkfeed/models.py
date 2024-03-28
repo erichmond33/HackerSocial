@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Custom User model inheriting from Django's AbstractUser
 class User(AbstractUser):
@@ -11,7 +13,7 @@ class Post(models.Model):
     # ForeignKey to link Post to its creator User
     user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="posts")
     #Title of post
-    title = models.CharField(blank="", max_length=255)
+    title = models.CharField(blank="Title", max_length=255)
     # Content of the post
     body = models.TextField(blank=True)
     # Number of likes for the post
@@ -56,17 +58,21 @@ class Comment(models.Model):
     def __str__(self):
         return f"{self.user.username} : {self.post.title} : {self.body} : {self.timestamp}"
 
-# Model for representing User profiles
 class Profile(models.Model):
-    # ForeignKey linking Profile to its associated User
-    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="idk")
-    # Many-to-many relationship representing users following this profile
-    follower = models.ManyToManyField(
-        User, blank=True, related_name="follower_user")
-    # Many-to-many relationship representing users whom this profile's user is following
-    following = models.ManyToManyField(
-        User, blank=True, related_name="following_user")
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    follower = models.ManyToManyField(User, blank=True, related_name="follower_user")
+    following = models.ManyToManyField(User, blank=True, related_name="following_user")
 
-    # Method to represent Profile objects as a string
     def __str__(self):
         return f"{self.user.username} : Followers = {self.follower.count()} : Following = {self.following.count()}"
+
+    
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
