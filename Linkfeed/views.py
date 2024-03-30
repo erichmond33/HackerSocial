@@ -81,38 +81,46 @@ def login_view(request):
 
 
 
-from django.http import HttpResponse
-from django.shortcuts import redirect
-from django.contrib.auth.models import User
+from django.db import IntegrityError
+import logging
+
+logger = logging.getLogger(__name__)
 
 def register(request):
     if request.method == "POST":
-        username = request.POST["username"]
-        email = request.POST["email"]
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+        confirmation = request.POST.get("confirmation")
 
         # Ensure password matches confirmation
-        password = request.POST["password"]
-        confirmation = request.POST["confirmation"]
         if password != confirmation:
             return render(request, "Linkfeed/register.html", {
                 "message": "Passwords must match."
             })
 
-        # Attempt to create new user
         try:
+            # Attempt to create new user
             user = User.objects.create_user(username, email, password)
-            user.save()
-        except IntegrityError:
-            return render(request, "Linkfeed/register.html", {
-                "message": "Username already taken."
-            })
-        login(request, user)
-        profile = Profile()
-        profile.user = user
-        profile.save()
-        return HttpResponseRedirect(reverse("index"))
+            # Log in the user
+            login(request, user)
+            return HttpResponseRedirect(reverse("index"))
+        except IntegrityError as e:
+            if 'unique constraint' in str(e).lower() and 'username' in str(e).lower():
+                # Username already exists
+                return render(request, "Linkfeed/register.html", {
+                    "message": "Username already exists."
+                })
+            else:
+                # Other IntegrityError, log and render generic error message
+                logger.error("IntegrityError occurred during user registration: %s", e)
+                return render(request, "Linkfeed/register.html", {
+                    "message": "An error occurred during registration. Please try again later."
+                })
+
     else:
         return render(request, "Linkfeed/register.html")
+
 
         
 def logout_view(request):
