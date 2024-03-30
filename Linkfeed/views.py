@@ -25,24 +25,32 @@ def index(request):
     return render(request, "Linkfeed/index.html", {"auth_token": auth_token})
 
 
+
+
 def current_user_profile(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse("login"))
     else:
-        posts = Post.objects.filter(user=request.user)
-        profile = get_object_or_404(Profile, user=request.user)
+        try:
+            posts = Post.objects.filter(user=request.user)
+            profile = get_object_or_404(Profile, user=request.user)
 
-        # Get the RSS feed associated with the current user
-        rss_feed = get_object_or_404(RSSFeed, user=request.user)
-        
-        # Parse the feed if found, else return empty entries list
-        if rss_feed:
-            feed = feedparser.parse(rss_feed.link)
-            entries = feed.entries
-        else:
-            entries = []  # Handle case where RSS feed is not available
+            # Get the RSS feed associated with the current user
+            rss_feed = RSSFeed.objects.filter(user=request.user).first()
+            
+            # Parse the feed if found, else return empty entries list
+            if rss_feed:
+                feed = feedparser.parse(rss_feed.link)
+                entries = feed.entries
+            else:
+                entries = []  # Handle case where RSS feed is not available
 
-        return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "entries": entries})
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "entries": entries})
+        except Http404:
+            # Handle the case where RSSFeed object does not exist for the user
+            entries = []  # No RSS feed available
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "entries": entries})
+
 
 def profile(request, username):
     if not request.user.is_authenticated:
@@ -56,13 +64,13 @@ def profile(request, username):
             posts = Post.objects.filter(user=profile_user)
             profile = get_object_or_404(Profile, user=profile_user)
 
-            rss_feed = get_object_or_404(RSSFeed, user=profile_user)
-            # Parse the feed if found, else return empty entries list
+            rss_feed = RSSFeed.objects.filter(user=profile_user).first()
             if rss_feed:
                 feed = feedparser.parse(rss_feed.link)
                 entries = feed.entries
             else:
                 entries = []  # Handle case where RSS feed is not available
+
             return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile, "entries": entries})
 
 
