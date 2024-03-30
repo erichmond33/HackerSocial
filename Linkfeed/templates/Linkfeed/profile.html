@@ -52,12 +52,30 @@
                     </div>
                 </div>
             </div>
+            <!-- Section for displaying RSS feeds -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">RSS Feed</h5>
+                    <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
+                        <!-- Iterate over each feed entry -->
+                        {% for entry in entries %}
+                        <div class="list-group-item">
+                            <h6>{{ entry.title }}</h6>
+                            <p><a href="{{ entry.link }}" target="_blank">{{ entry.link }}</a></p>
+                            <p>Last updated: {{ entry.updated }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="fixed-bottom mb-3 mr-3">
     <button id="create-post-btn" onclick="toggleCreatePostPopup()" class="btn btn-success mr-2">Create Post</button>
+    <!-- Button to mirror RSS feed -->
+    <button id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="btn btn-info mr-2">Mirror RSS Feed</button>
     <!-- Button to navigate to the feed page -->
     <a href="{% url 'feed' %}" class="btn btn-primary">Feed</a>
 </div>
@@ -89,6 +107,29 @@
     </div>
 </div>
 
+<div id="mirrorRSSFeedPopup" class="modal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mirror RSS Feed</h5>
+                <button type="button" class="close" onclick="toggleMirrorRSSFeedPopup()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="mirrorRSSFeedForm" method="post" action="{% url 'mirror_rss_feed' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="rssFeedLink">RSS Feed Link:</label>
+                        <input type="url" class="form-control" id="rssFeedLink" name="link" placeholder="Enter RSS Feed link">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mirror</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // Function to toggle create post popup
     function toggleCreatePostPopup() {
@@ -96,32 +137,45 @@
         popup.style.display = popup.style.display === "none" ? "block" : "none";
     }
 
+    // Function to toggle mirror RSS feed popup
+    function toggleMirrorRSSFeedPopup() {
+        var popup = document.getElementById("mirrorRSSFeedPopup");
+        popup.style.display = popup.style.display === "none" ? "block" : "none";
+    }
+
     // Function to handle post deletion
-    document.querySelectorAll('.delete-btn').forEach(item => {
-        item.addEventListener('click', event => {
-            event.preventDefault(); // Prevent the default action of the delete button
-            const postId = item.getAttribute('data-post-id');
-            if (confirm("Are you sure you want to delete this post?")) {
-                fetch("{% url 'delete_post' post_id=0 %}".replace("0", postId), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({ post_id: postId })
-                })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload(); // Reload the page after successful deletion
-                    } else {
-                        console.error('Failed to delete post');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-            }
+    function setupDeleteButtons() {
+        document.querySelectorAll('.delete-btn').forEach(item => {
+            item.addEventListener('click', event => {
+                event.preventDefault(); // Prevent the default action of the delete button
+                const postId = item.getAttribute('data-post-id');
+                if (confirm("Are you sure you want to delete this post?")) {
+                    fetch("{% url 'delete_post' post_id=0 %}".replace("0", postId), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ post_id: postId })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            item.closest('.list-group-item').remove(); // Remove the deleted post from the DOM
+                        } else {
+                            console.error('Failed to delete post');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
         });
+    }
+
+    // Call setupDeleteButtons when the DOM is ready
+    document.addEventListener("DOMContentLoaded", function() {
+        setupDeleteButtons();
     });
 
      // Function to handle hover and click effects for followers link
