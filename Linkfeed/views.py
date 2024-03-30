@@ -203,14 +203,20 @@ def add_comment(request, post_id):
 def delete_comment(request, comment_id):
     if request.method == "DELETE":
         comment = get_object_or_404(Comment, id=comment_id)
-        # Check if the user is authenticated and is the owner of the comment
-        if comment.user == request.user:
-            comment.delete()
-            # Return a JSON response indicating success
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('profile')))
+        # Check if the user is authenticated
+        if request.user.is_authenticated:
+            # Check if the user is the owner of the comment or the owner of the post
+            if comment.user == request.user or comment.post.user == request.user:
+                comment.delete()
+                # Return a JSON response indicating success
+                return JsonResponse({'message': 'Comment deleted successfully.'})
+            else:
+                # Return a forbidden response if the user is not authorized
+                return JsonResponse({'error': 'You are not authorized to delete this comment.'}, status=403)
         else:
-            # Return a forbidden response if the user is not the owner of the comment
-            return HttpResponseForbidden("You are not authorized to delete this comment.")
+            # Return a forbidden response if the user is not authenticated
+            return JsonResponse({'error': 'You must be logged in to delete a comment.'}, status=403)
+
 
 
 

@@ -20,7 +20,7 @@ from django.shortcuts import redirect
 
 urlpatterns = [
     path('admin/', admin.site.urls), #Commetn out before doing migrations
-    path('', lambda request: redirect('Linkfeed/')),
+    path('', lambda request: redirect('Linkfeed/login')),
     path('Linkfeed/', include("Linkfeed.urls")),
     
 ]

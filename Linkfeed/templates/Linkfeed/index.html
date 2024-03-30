@@ -22,6 +22,12 @@
     <button type="submit">Logout</button>
 </form>
 
+<!-- Profile and Feed buttons -->
+<div class="fixed-bottom mb-3 ml-3">
+    <a href="{% url 'profile' %}" class="btn btn-success mr-2">Profile</a>
+    <a href="{% url 'feed' %}" class="btn btn-primary mr-2">Feed</a>
+</div>
+
 {% else %}
 <p>No authentication token available.</p>
 {% endif %}

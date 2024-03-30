@@ -28,7 +28,7 @@
                                         {% endif %}
                                         <p class="mb-0 text-muted">Likes: {{ post.total_likes }}</p>
                                         <!-- Add a class to the paragraph containing the username -->
-                                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted posted-by" style="cursor: pointer;">Posted by: <span class="username-link">{{ post.user.username }}</span></p>
+                                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted posted-by" style="cursor: pointer;">Posted by: <span class="username-link" data-username="{{ post.user.username }}">{{ post.user.username }}</span></p>
                                     </div>
                                 </div>
                             </a>
@@ -64,6 +64,8 @@
     <button id="import-rss-feed-btn" onclick="toggleImportRSSFeedPopup()" class="btn btn-primary mr-2">Import RSS Feed</button>
     <!-- Add a button to show imported feeds -->
     <button id="showImportedFeedsBtn" class="btn btn-primary mr-2" onclick="showImportedFeeds()">Show Imported Feeds</button>
+    <!-- Home button -->
+    <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
 </div>
 
 <!-- Popup for importing RSS feed -->
@@ -119,6 +121,8 @@
 </div>
 
 <!-- JavaScript to handle the toggle effect of the popup -->
+<!-- JavaScript to handle the toggle effect of the popup -->
+<!-- JavaScript to handle the toggle effect of the popup -->
 <script>
     function toggleImportRSSFeedPopup() {
         var popup = document.getElementById("importRSSFeedPopup");
@@ -155,11 +159,24 @@
             });
         }
     }
-    
-    
-    
-    
-    
+
+    // Add event listeners to username links
+    var usernameLinks = document.querySelectorAll('.username-link');
+    usernameLinks.forEach(link => {
+        link.addEventListener('mouseover', function() {
+            this.style.textDecoration = 'underline';
+        });
+        link.addEventListener('mouseout', function() {
+            this.style.textDecoration = 'none';
+        });
+        link.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the default action of the link
+            var username = this.innerText; // Get the username from the link text
+            window.location.href = '/Linkfeed/profile/' + username + '/';
+        });
+    });
 </script>
+
+
 
 {% endblock body %}
