@@ -20,6 +20,7 @@ class Post(models.Model):
     likes = models.ManyToManyField(User, related_name="blog_posts") 
     # Timestamp indicating when the post was created
     timestamp = models.DateTimeField(auto_now_add=True)
+    
 
     def total_likes(self):
         return self.likes.count()
@@ -76,3 +77,17 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+class RSSFeed(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    link = models.URLField()
+
+    def __str__(self):
+        return f"{self.user.username}'s RSS Feed: {self.link}"
+
+class ImportedRSSFeed(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    link = models.URLField()
+
+    def __str__(self):
+        return f"Imported RSS Feed for {self.user.username}: {self.link}"

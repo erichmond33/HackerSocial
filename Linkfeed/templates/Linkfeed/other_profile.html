@@ -60,6 +60,21 @@
                     </div>
                 </div>
             </div>
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">RSS Feed</h5>
+                    <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
+                        <!-- Iterate over each feed entry -->
+                        {% for entry in entries %}
+                        <div class="list-group-item">
+                            <h6>{{ entry.title }}</h6>
+                            <p><a href="{{ entry.link }}" target="_blank">{{ entry.link }}</a></p>
+                            <p>Last updated: {{ entry.updated }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

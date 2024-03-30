@@ -28,7 +28,7 @@
                                         {% endif %}
                                         <p class="mb-0 text-muted">Likes: {{ post.total_likes }}</p>
                                         <!-- Add a class to the paragraph containing the username -->
-                                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted posted-by">Posted by: {{ post.user.username }}</p>
+                                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted posted-by" style="cursor: pointer;">Posted by: <span class="username-link">{{ post.user.username }}</span></p>
                                     </div>
                                 </div>
                             </a>
@@ -39,45 +39,127 @@
                     </div>
                 </div>
             </div>
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">RSS Feed</h5>
+                    <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
+                        <!-- Iterate over each feed entry -->
+                        {% for entry in entries %}
+                        <div class="list-group-item">
+                            <h6>{{ entry.title }}</h6>
+                            <p><a href="{{ entry.link }}" target="_blank">{{ entry.link }}</a></p>
+                            <p>Last updated: {{ entry.updated }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Profile button -->
+<!-- Profile and Import feed buttons -->
 <div class="fixed-bottom mb-3 ml-3">
-    <a href="{% url 'profile' %}" class="btn btn-success">Profile</a>
+    <a href="{% url 'profile' %}" class="btn btn-success mr-2">Profile</a>
+    <button id="import-rss-feed-btn" onclick="toggleImportRSSFeedPopup()" class="btn btn-primary mr-2">Import RSS Feed</button>
+    <!-- Add a button to show imported feeds -->
+    <button id="showImportedFeedsBtn" class="btn btn-primary mr-2" onclick="showImportedFeeds()">Show Imported Feeds</button>
 </div>
 
-<!-- JavaScript to handle the click event -->
-<!-- JavaScript to handle the click event -->
+<!-- Popup for importing RSS feed -->
+<div id="importRSSFeedPopup" class="modal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import RSS Feed</h5>
+                <button type="button" class="close" onclick="toggleImportRSSFeedPopup()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="importRSSFeedForm" method="post" action="{% url 'imported_rss_feed' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="rssFeedLink">RSS Feed Link:</label>
+                        <input type="url" class="form-control" id="rssFeedLink" name="link" placeholder="Enter RSS Feed link">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Popup for displaying imported feeds -->
+<div id="importedFeedsPopup" class="modal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Imported Feeds</h5>
+                <button type="button" class="close" onclick="showImportedFeeds()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {% if imported_feeds %}
+                    <ul>
+                        {% for feed in imported_feeds %}
+                            <li class="d-flex justify-content-between align-items-center">
+                                <a href="{{ feed }}" target="_blank">{{ feed }}</a>
+                                <button class="btn btn-danger" onclick="deleteImportedFeed({{ feed.id }})">Delete</button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No imported feeds available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript to handle the toggle effect of the popup -->
 <script>
-    // Iterate over each post and add click event listener to the "Posted by" paragraph
-    {% for post in posts %}
-        var postContainer = document.querySelector("#posted-by-{{ post.id }}").closest('.post-container');
+    function toggleImportRSSFeedPopup() {
+        var popup = document.getElementById("importRSSFeedPopup");
+        popup.style.display = popup.style.display === "none" ? "block" : "none";
+    }
 
-        document.getElementById("posted-by-{{ post.id }}").addEventListener("click", function(event) {
-            event.preventDefault(); // Prevent the default behavior of clicking the link
-            var username = this.textContent.split(":")[1].trim(); // Extract username from the paragraph text
-            var profileURL = "/Linkfeed/profile/" + username; // Construct profile URL
-            window.location.href = profileURL; // Redirect to the profile page
-            postContainer.classList.add("disabled"); // Disable post container
-            setTimeout(function() {
-                postContainer.classList.remove("disabled"); // Re-enable post container after a delay
-            }, 1000); // Adjust the delay as needed
-        });
+    // Function to handle showing imported feeds popup
+    function showImportedFeeds() {
+        var popup = document.getElementById("importedFeedsPopup");
+        popup.style.display = popup.style.display === "none" ? "block" : "none";
+    }
 
-        // Add hover effect
-        document.getElementById("posted-by-{{ post.id }}").addEventListener("mouseover", function() {
-            this.style.textDecoration = "underline"; // Underline on hover
-            postContainer.classList.add("disabled"); // Disable post container
-        });
-
-        document.getElementById("posted-by-{{ post.id }}").addEventListener("mouseout", function() {
-            this.style.textDecoration = "none"; // Remove underline on mouseout
-            postContainer.classList.remove("disabled"); // Re-enable post container
-        });
-    {% endfor %}
+    function deleteImportedFeed(feedId) {
+        var confirmation = confirm("Are you sure you want to delete this feed?");
+        if (confirmation) {
+            fetch('/Linkfeed/delete_imported_feed/' + feedId + '/', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Handle successful deletion
+                    // Refresh the page to reflect the changes
+                    location.reload();
+                } else {
+                    // Handle deletion error
+                    console.error('Failed to delete feed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    }
+    
+    
+    
+    
+    
 </script>
-
 
 {% endblock body %}
