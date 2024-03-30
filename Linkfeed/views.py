@@ -1,3 +1,4 @@
+from sqlite3 import IntegrityError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseRedirect, HttpResponse,HttpResponseForbidden, JsonResponse, HttpResponseBadRequest
 
@@ -76,13 +77,44 @@ def login_view(request):
             return render(request, "Linkfeed/login.html", {
                 "message": "Invalid credentials."
             })
-
     return render(request, "Linkfeed/login.html")
 
 
 
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.contrib.auth.models import User
 
+def register(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        email = request.POST["email"]
 
+        # Ensure password matches confirmation
+        password = request.POST["password"]
+        confirmation = request.POST["confirmation"]
+        if password != confirmation:
+            return render(request, "Linkfeed/register.html", {
+                "message": "Passwords must match."
+            })
+
+        # Attempt to create new user
+        try:
+            user = User.objects.create_user(username, email, password)
+            user.save()
+        except IntegrityError:
+            return render(request, "Linkfeed/register.html", {
+                "message": "Username already taken."
+            })
+        login(request, user)
+        profile = Profile()
+        profile.user = user
+        profile.save()
+        return HttpResponseRedirect(reverse("index"))
+    else:
+        return render(request, "Linkfeed/register.html")
+
+        
 def logout_view(request):
     logout(request)
     return render(request, "Linkfeed/login.html", {
