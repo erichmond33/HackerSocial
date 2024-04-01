@@ -21,6 +21,7 @@ from django.shortcuts import redirect
 urlpatterns = [
     path('admin/', admin.site.urls), #Commetn out before doing migrations
     path('', lambda request: redirect('Linkfeed/login')),
+    path('social-auth/)', include('allauth.urls')),
     path('Linkfeed/', include("Linkfeed.urls")),
     
 ]
