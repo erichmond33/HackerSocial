@@ -28,7 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-
+CSRF_COOKIE_SAMESITE = False
 # Application definition
 
 INSTALLED_APPS = [

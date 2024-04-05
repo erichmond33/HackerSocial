@@ -35,21 +35,10 @@ def current_user_profile(request):
             posts = Post.objects.filter(user=request.user)
             profile = get_object_or_404(Profile, user=request.user)
 
-            # Get the RSS feed associated with the current user
-            rss_feed = RSSFeed.objects.filter(user=request.user).first()
-            
-            # Parse the feed if found, else return empty entries list
-            if rss_feed:
-                feed = feedparser.parse(rss_feed.link)
-                entries = feed.entries
-            else:
-                entries = []  # Handle case where RSS feed is not available
-
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "entries": entries})
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
         except Http404:
             # Handle the case where RSSFeed object does not exist for the user
-            entries = []  # No RSS feed available
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "entries": entries})
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
 
 
 def profile(request, username):
@@ -64,14 +53,8 @@ def profile(request, username):
             posts = Post.objects.filter(user=profile_user)
             profile = get_object_or_404(Profile, user=profile_user)
 
-            rss_feed = RSSFeed.objects.filter(user=profile_user).first()
-            if rss_feed:
-                feed = feedparser.parse(rss_feed.link)
-                entries = feed.entries
-            else:
-                entries = []  # Handle case where RSS feed is not available
 
-            return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile, "entries": entries})
+            return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
 
 
     
@@ -86,14 +69,8 @@ def feed(request):
             posts = Post.objects.filter(user__id__in=following_ids)
 
             imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
-            # Parse the feed if found, else return empty entries list
-            entries = []
-            # Parse each RSS feed and add its entries to the list
-            for imported_rss_feed in imported_rss_feeds:
-                feed = feedparser.parse(imported_rss_feed.link)
-                entries.extend(feed.entries)
 
-            return render(request, 'Linkfeed/feed.html', {'posts': posts, 'entries': entries, 'imported_feeds': imported_rss_feeds})
+            return render(request, 'Linkfeed/feed.html', {'posts': posts,'imported_feeds': imported_rss_feeds})
         except Profile.DoesNotExist:
             # Handle the case where the user doesn't have a profile
             return redirect('login')  # Redirect to login page or handle as appropriate
@@ -328,18 +305,41 @@ def mirror_rss_feed(request):
             # Check if the user already has an RSS feed stored
             existing_feed = RSSFeed.objects.filter(user=user).first()
             if existing_feed:
+                # Delete all RSS feed posts created from the previous RSS feed link
+                Post.objects.filter(user=user, is_rss_feed_post=True).delete()
                 # Update the existing RSS feed link
                 existing_feed.link = rss_feed_link
                 existing_feed.save()
             else:
                 # Create a new RSS feed entry
                 RSSFeed.objects.create(user=user, link=rss_feed_link)
+
+            # Redirect to the same page to avoid resubmission
             return HttpResponseRedirect(request.path_info)
 
     # Retrieve the updated list of RSS feeds for the user
-    user_rss_feeds = RSSFeed.objects.filter(user=user)
+    rss_feed = RSSFeed.objects.filter(user=request.user).first()
+    if rss_feed:
+        # Delete all RSS feed posts created from the previous RSS feed link
+        Post.objects.filter(user=user, is_rss_feed_post=True).delete()
+
+        feed = feedparser.parse(rss_feed.link)
+        entries = feed.entries
+        
+        # Iterate through each entry and create a post
+        for entry in entries:
+            title = entry.get('title', 'No Title')
+            body = entry.get('link', 'No Link')  # You can change this to get other fields like summary
+            # Create a new post with is_rss_feed_post=True
+            new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True)
+    else:
+        entries = []  # Handle case where RSS feed is not available
 
     return redirect('profile')
+
+
+
+
 
 
 
@@ -355,12 +355,27 @@ def imported_rss_feed(request):
             if not existing_feed:
                 # Create a new RSS feed entry
                 ImportedRSSFeed.objects.create(user=user, link=rss_feed_link)
+
+            # Redirect to the same page to avoid resubmission
             return HttpResponseRedirect(request.path_info)
 
     # Retrieve the list of imported RSS feeds for the user
     user_imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
 
+    # Iterate through each imported feed and create posts
+    for imported_feed in user_imported_rss_feeds:
+        feed = feedparser.parse(imported_feed.link)
+        entries = feed.entries
+        
+        # Iterate through each entry and create a post
+        for entry in entries:
+            title = entry.get('title', 'No Title')
+            body = entry.get('link', 'No Link')  # You can change this to get other fields like summary
+            # Create a new post with is_rss_feed_post=True
+            new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True)
+
     return redirect('feed')
+
 
 
 def delete_imported_feed(request, feed_id):

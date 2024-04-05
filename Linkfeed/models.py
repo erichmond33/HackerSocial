@@ -8,19 +8,21 @@ from django.dispatch import receiver
 class User(AbstractUser):
     pass
 
-# Model for representing Posts
+
 class Post(models.Model):
     # ForeignKey to link Post to its creator User
     user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="posts")
-    #Title of post
-    title = models.CharField(blank="Title", max_length=255)
+    # Title of post
+    title = models.CharField(blank=True, max_length=255)
     # Content of the post
-    body = models.TextField(blank=True)
+    body = models.URLField(blank=True, null=True)
     # Number of likes for the post
-    likes = models.ManyToManyField(User, related_name="blog_posts") 
+    likes = models.ManyToManyField("User", related_name="blog_posts")
     # Timestamp indicating when the post was created
     timestamp = models.DateTimeField(auto_now_add=True)
-    
+    # BooleanField to indicate if the post is from an RSS feed
+    is_rss_feed_post = models.BooleanField(default=False)
+    is_imported_rss_feed_post = models.BooleanField(default=False)
 
     def total_likes(self):
         return self.likes.count()
@@ -28,6 +30,7 @@ class Post(models.Model):
     # Method to represent Post objects as a string
     def __str__(self):
         return f"{self.id} : {self.user.username} : id={self.user.id} : {self.title} : {self.body} : {self.likes} : {self.timestamp}"
+
 
     # Method to serialize Post objects into dictionary format
     def serialize(self):
