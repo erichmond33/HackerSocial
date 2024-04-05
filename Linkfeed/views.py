@@ -374,3 +374,6 @@ def delete_imported_feed(request, feed_id):
         else:
             # Return a forbidden response if the user is not the owner of the feed
             return HttpResponseForbidden("You are not authorized to delete this feed.")
+
+def landing(request):
+    return render(request, 'Linkfeed/landingpage.html')
