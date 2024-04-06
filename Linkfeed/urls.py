@@ -25,6 +25,7 @@ urlpatterns = [
     path('follow/<str:username>/', views.follow_view, name='follow_profile'),
     path('mirror-rss-feed/', views.mirror_rss_feed, name='mirror_rss_feed'),
     path('import-rss-feed/', views.imported_rss_feed, name='imported_rss_feed'),
+    # path('delete_imported_feed/<int:feed_id>/', views.delete_imported_feed, name='delete_imported_feed'),
     path('delete_imported_feed/<int:feed_id>/', views.delete_imported_feed, name='delete_imported_feed'),
    
 ]

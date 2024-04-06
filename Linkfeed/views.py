@@ -67,10 +67,11 @@ def feed(request):
             following_ids = profile.following.values_list('id', flat=True)
             # Retrieve posts from the Linkfeed that the current user is following
             posts = Post.objects.filter(user__id__in=following_ids)
+            rss_post = Post.objects.filter(is_imported_rss_feed_post=True)
 
             imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
 
-            return render(request, 'Linkfeed/feed.html', {'posts': posts,'imported_feeds': imported_rss_feeds})
+            return render(request, 'Linkfeed/feed.html', {'posts': posts,'imported_feeds': imported_rss_feeds, 'rss_post': rss_post})
         except Profile.DoesNotExist:
             # Handle the case where the user doesn't have a profile
             return redirect('login')  # Redirect to login page or handle as appropriate
@@ -350,42 +351,36 @@ def imported_rss_feed(request):
     if request.method == 'POST':
         if form.is_valid():
             rss_feed_link = form.cleaned_data['link']
-            # Check if the user already has the same RSS feed link
             existing_feed = ImportedRSSFeed.objects.filter(user=user, link=rss_feed_link).exists()
             if not existing_feed:
-                # Create a new RSS feed entry
-                ImportedRSSFeed.objects.create(user=user, link=rss_feed_link)
-
-            # Redirect to the same page to avoid resubmission
+                new_imported_feed = ImportedRSSFeed.objects.create(user=user, link=rss_feed_link)
+                feed = feedparser.parse(rss_feed_link)
+                entries = feed.entries
+                for entry in entries:
+                    title = entry.get('title', 'No Title')
+                    body = entry.get('link', 'No Link')
+                    # Create a new post and associate it with the imported RSS feed
+                    new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=new_imported_feed)
             return HttpResponseRedirect(request.path_info)
 
-    # Retrieve the list of imported RSS feeds for the user
     user_imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
-
-    # Iterate through each imported feed and create posts
     for imported_feed in user_imported_rss_feeds:
         feed = feedparser.parse(imported_feed.link)
         entries = feed.entries
-        
-        # Iterate through each entry and create a post
         for entry in entries:
             title = entry.get('title', 'No Title')
-            body = entry.get('link', 'No Link')  # You can change this to get other fields like summary
-            # Create a new post with is_rss_feed_post=True
-            new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True)
+            body = entry.get('link', 'No Link')
+            new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=imported_feed)
 
     return redirect('feed')
 
 
-
 def delete_imported_feed(request, feed_id):
-    if request.method == "DELETE":
-        feed = get_object_or_404(ImportedRSSFeed, id=feed_id, user=request.user)
-        # Check if the user is authenticated and is the owner of the feed
-        if feed.user == request.user:
-            feed.delete()
-            # Return a JSON response indicating success
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('feed')))
-        else:
-            # Return a forbidden response if the user is not the owner of the feed
-            return HttpResponseForbidden("You are not authorized to delete this feed.")
+    imported_rss_feed = get_object_or_404(ImportedRSSFeed, id=feed_id, user=request.user)
+    # Delete posts associated with the imported RSS feed
+    Post.objects.filter(user=request.user, imported_rss_feed=imported_rss_feed).delete()
+    # Delete the imported RSS feed itself
+    imported_rss_feed.delete()
+    return redirect('feed')
+
+
