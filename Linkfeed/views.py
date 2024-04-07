@@ -26,8 +26,6 @@ def index(request):
     return render(request, "Linkfeed/index.html", {"auth_token": auth_token})
 
 
-
-
 def current_user_profile(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse("login"))
@@ -35,6 +33,10 @@ def current_user_profile(request):
         try:
             posts = Post.objects.filter(user=request.user).order_by('-timestamp')
             profile = get_object_or_404(Profile, user=request.user)
+
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
 
             return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
         except Http404:
@@ -51,8 +53,11 @@ def profile(request, username):
         if profile_user == request.user:
             return redirect('current_user_profile')
         else:
-            posts = Post.objects.filter(user=request.user).order_by('-timestamp')
+            posts = Post.objects.filter(user=profile_user).order_by('-timestamp')
             profile = get_object_or_404(Profile, user=profile_user)
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
 
 
             return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
@@ -71,6 +76,10 @@ def feed(request):
 
 
             imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
+
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
 
             return render(request, 'Linkfeed/feed.html', {'posts': posts,'imported_feeds': imported_rss_feeds})
         except Profile.DoesNotExist:
@@ -240,14 +249,26 @@ def create_post(request):
         return render(request, "Linkfeed/create_post.html")
     
 
+
 @login_required
 def like_view(request, pk):
+    # Assuming your Post model and like logic remains the same
     post = get_object_or_404(Post, id=request.POST.get('post_id'))
+
     if post.likes.filter(id=request.user.id).exists():
         post.likes.remove(request.user)
     else:
         post.likes.add(request.user)
-    return HttpResponseRedirect(reverse('post', args=[str(pk)]))
+
+    # Get the referring URL
+    referring_url = request.META.get('HTTP_REFERER')
+
+    # Append the pk parameter to the referring URL
+    redirect_url = f"{referring_url}?pk={pk}" if referring_url else reverse('index')
+
+    # Redirect to the modified URL
+    return HttpResponseRedirect(redirect_url)
+
 
 
 @login_required

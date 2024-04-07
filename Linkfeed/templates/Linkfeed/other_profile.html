@@ -19,7 +19,7 @@
 
         .card-posts {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
         }
 
         .fixed-bottom {
@@ -90,6 +90,14 @@
                         {% if post.user == user %}
                         <button data-post-id="{{ post.id }}" class="delete-btn btn btn-danger">Delete</button>
                         {% endif %}
+                        <form action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
+                            {% csrf_token %}
+                            {% if post.liked %}
+                              <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-warning btn-sm">Unlike</button> 
+                            {% else %}
+                              <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-outline-primary btn-sm">Like</button>
+                            {% endif %}
+                        </form>
                     </div>
                 </div>
             </div>
