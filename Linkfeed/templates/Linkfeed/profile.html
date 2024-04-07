@@ -81,6 +81,7 @@
     <button id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="btn btn-info">Mirror RSS Feed</button>
     <a href="{% url 'feed' %}" class="btn btn-primary">Feed</a>
     <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
+    <button id="refresh-mirrored-rss-feed-btn" class="btn btn-warning">Refresh RSS Feed</button>
 </div>
 
 <div id="createPostPopup" class="modal" style="display: none;">
@@ -144,6 +145,31 @@
         var popup = document.getElementById("mirrorRSSFeedPopup");
         popup.style.display = popup.style.display === "none" ? "block" : "none";
     }
+
+    // Function to refresh the mirrored RSS feed
+    function refreshMirroredRSSFeed() {
+        fetch("{% url 'refresh_mirrored_rss_feed' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                // Reload the page after successful refresh
+                window.location.reload();
+            } else {
+                console.error('Failed to refresh mirrored RSS feed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    // Attach onclick event handler to the refresh button
+    document.getElementById('refresh-mirrored-rss-feed-btn').addEventListener('click', refreshMirroredRSSFeed);
 
     function setupDeleteButtons() {
         document.querySelectorAll('.delete-btn').forEach(item => {

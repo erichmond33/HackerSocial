@@ -24,24 +24,9 @@
                                         <h6 class="mb-0">{{ post.title }}</h6>
                                         <p class="mb-0"><a href="{{ post.body }}">{{ post.body }}</a></p>
                                         <p class="mb-0 text-muted">Likes: {{ post.total_likes }}</p>
+                                        {% if post.user != user %}
                                         <p id="posted-by-{{ post.id }}" class="mb-0 text-muted posted-by" style="cursor: pointer;">Posted by: <span class="username-link" data-username="{{ post.user.username }}">{{ post.user.username }}</span></p>
-                                    </div>
-                                    <div>
-                                        <a href="{% url 'post' post.id %}" class="btn btn-primary">View Post</a>
-                                        {% if post.user == user %}
-                                            <button data-post-id="{{ post.id }}" class="delete-btn btn btn-danger">Delete</button>
                                         {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                    {% endfor %}
-                    {% for post in rss_post %}
-                            <div class="list-group-item list-group-item-action">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-0">{{ post.title }}</h6>
-                                        <p class="mb-0"><a href="{{ post.body }}">{{ post.body }}</a></p>
-                                        <p class="mb-0 text-muted">Likes: {{ post.total_likes }}</p>
                                     </div>
                                     <div>
                                         <a href="{% url 'post' post.id %}" class="btn btn-primary">View Post</a>
@@ -66,6 +51,7 @@
     <button id="showImportedFeedsBtn" class="btn btn-primary mr-2" onclick="showImportedFeeds()">Show Imported Feeds</button>
     <!-- Home button -->
     <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
+    <button id="refresh-imported-rss-feed-btn" class="btn btn-warning">Refresh RSS Feed</button>
 </div>
 
 <!-- Popup for importing RSS feed -->
@@ -172,6 +158,30 @@
             window.location.href = '/Linkfeed/profile/' + username + '/';
         });
     });
+
+    document.getElementById('refresh-imported-rss-feed-btn').addEventListener('click', refreshImportedRSSFeed);
+
+     // Function to refresh the mirrored RSS feed
+     function refreshImportedRSSFeed() {
+        fetch("{% url 'refresh_imported_rss_feed' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                // Reload the page after successful refresh
+                window.location.reload();
+            } else {
+                console.error('Failed to refresh imported RSS feed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
 </script>
 
 {% endblock body %}
