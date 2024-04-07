@@ -1,0 +1,142 @@
+@font-face { 
+	font-family: Sabado;
+	src: url("./Sabado\ Regular.ttf");
+	font-style: normal;
+}
+@font-face {
+	font-family: Nexa;
+	 src: url("./Nexa\ Bold.otf");
+}
+@font-face {
+	font-family: Space;
+	src: url("./SpaceGrotesk.ttf");
+	font-weight: normal;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+body{
+	max-width:40em;
+	margin:0 auto;
+	padding-right:1em;
+	padding-left: 1em;
+	font-family: Space, sans-serif;
+	font-size:20px;
+	line-height:30px;
+	background-color:#fff;
+	color:#000;
+	font-weight: 300;
+	overflow-y:scroll;
+}
+
+h1,h2,h3,h4,dt,small,.small,dl#tweetlist dt,footer,label,#commentlist ol li cite,div.blogparent,input[type="submit"]{
+	font-family: Nexa;
+	font-weight:normal;
+	font-style:normal;
+	text-align:left;
+}
+
+
+a {
+	color: #EA322E;
+}
+
+a:visited {
+	color: #EA322E;
+}
+
+a:hover {
+	color: #EA322E;
+}
+
+.red-button {
+	background-color: #EA322E;
+	color: white;
+	font-size: 20px;
+}
+
+.red-button a {
+	color: white;
+}
+
+.red-button a:hover {
+	text-decoration: none;
+}
+
+#username-header {
+    font-family: Sabado, sans-serif;
+    font-size: 3.5em;
+}
+
+#username-header a {
+	color:#000;
+}
+
+.follow-button {
+	border: 1px solid red;
+	border-radius: 25px;
+}
+
+.create-post {
+	border: 1px solid black;
+	border-radius: 25px;
+}
+
+#create-post-form {
+	width: 80%;
+}
+
+#title-input {
+	font-size: 1.5rem;
+}
+
+#body-input {
+	font-size: 20px;
+}
+
+#create-post-button {
+	width: 100%;
+}
+
+#posts {
+    width: 100%;
+}
+
+.wrapped-post-link {
+    position: relative; /* Ensure z-index works */
+    z-index: 1;
+    color: black;
+}
+
+.wrapped-post-link:visited {
+	color: black;
+}
+
+.wrapped-post-link:hover {
+    text-decoration: none;
+	color: black;
+}
+
+.wrapped-post:hover {
+	background-color: #f1f1f1;
+}
+
+.post {
+    border-bottom: 1px solid black;
+}
+
+.post-title {
+    font-family: Nexa, sans-serif;
+}
+
+.post-body {
+    z-index: 5;
+	color:#EA322E;
+}
+
+
+/* <!-- <a href="{% url 'post' post.id %}" class="btn btn-primary">View Post</a>
+{% if post.user == user %}
+<button data-post-id="{{ post.id }}" class="delete-btn btn btn-danger">Delete</button>
+{% endif %} --> */

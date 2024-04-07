@@ -24,62 +24,38 @@ def index(request):
     auth_token = request.session.get('auth_token', None)
     return render(request, "Linkfeed/index.html", {"auth_token": auth_token})
 
-
-
-
+@login_required
 def current_user_profile(request):
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse("login"))
-    else:
-        try:
-            posts = Post.objects.filter(user=request.user)
-            profile = get_object_or_404(Profile, user=request.user)
-
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
-        except Http404:
-            # Handle the case where RSSFeed object does not exist for the user
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
-
+    user = request.user
+    return redirect('profile', username=user.username)
 
 def profile(request, username):
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse("login"))
-    else:
-        profile_user = get_object_or_404(User, username=username)
-        # Check if the requested profile is the profile of the logged-in user
-        if profile_user == request.user:
-            return redirect('current_user_profile')
-        else:
-            posts = Post.objects.filter(user=profile_user)
-            profile = get_object_or_404(Profile, user=profile_user)
+    user = User.objects.get(username=username)
+    posts = Post.objects.filter(user=user)
+    profile = Profile.objects.get(user=user)
 
-
-            return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
-
-
-    
-def feed(request):
+    # Check if we are following them
+    following = False
     if request.user.is_authenticated:
-        try:
-            # Retrieve the profile associated with the current user
-            profile = Profile.objects.get(user=request.user)
-            # Retrieve the IDs of Linkfeed that the current user is following
-            following_ids = profile.following.values_list('id', flat=True)
-            # Retrieve posts from the Linkfeed that the current user is following
-            posts = Post.objects.filter(user__id__in=following_ids)
+        if request.user in profile.follower.all():
+            following = True
 
-            imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
+    return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "following": following})
 
-            return render(request, 'Linkfeed/feed.html', {'posts': posts,'imported_feeds': imported_rss_feeds})
-        except Profile.DoesNotExist:
-            # Handle the case where the user doesn't have a profile
-            return redirect('login')  # Redirect to login page or handle as appropriate
-    else:
-        return redirect('login')
+@login_required
+def current_user_feed(request):
+    user = request.user
+    return redirect('feed', username=user.username)
+    
+def feed(request, username):
+    user = User.objects.get(username=username)
+    posts = Post.objects.filter(user=user)
+    profile = Profile.objects.get(user=user)
 
+    # Order posts reverse chronologically
+    posts = posts.order_by("timestamp").all()
 
-
-
+    return render(request, "Linkfeed/feed.html", {"posts": posts, "profile": profile})
 
 def login_view(request):
     if request.method == "POST":
@@ -89,8 +65,9 @@ def login_view(request):
         if user is not None:
             login(request, user)
             # Pass the authentication token to the session
-            request.session['auth_token'] = request.session.session_key
-            return HttpResponseRedirect(reverse("index"))
+            # request.session['auth_token'] = request.session.session_key
+            # return HttpResponseRedirect(reverse("index"))
+            return redirect('profile', username=username)
         else:
             return render(request, "Linkfeed/login.html", {
                 "message": "Invalid credentials."
@@ -266,7 +243,6 @@ def following_view(request, username):
     return render(request, 'Linkfeed/following.html', {'following': following})
 
 
-
 @login_required
 def follow_view(request, username):
     if not request.user.is_authenticated:
@@ -292,8 +268,25 @@ def follow_view(request, username):
 
         # Redirect to the profile of the user being followed or unfollowed
         return HttpResponseRedirect(reverse('profile', args=[username]))
+    
+@login_required
+def follow_or_unfollow(request, username):
+    # Retrieve the profile of the user to follow
+    profile_to_follow = Profile.objects.get(user__username=username)
+    profile = Profile.objects.get(user=request.user)
 
+    # Check if the logged-in user is already following the profile
+    if request.user in profile_to_follow.follower.all():
+        # User is already following, so unfollow
+        profile_to_follow.follower.remove(request.user)
+        profile.following.remove(profile_to_follow.user)
+    else:
+        # User is not following, so follow
+        profile_to_follow.follower.add(request.user)
+        profile.following.add(profile_to_follow.user)
 
+    # Render the same page after following or unfollowing
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('profile')))
 
 def mirror_rss_feed(request):
     form = RSSFeedForm(request.POST or None)
