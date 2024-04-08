@@ -22,8 +22,7 @@ from django.db.models import Q
 @login_required
 def index(request):
     # Retrieve the authentication token from the session
-    auth_token = request.session.get('auth_token', None)
-    return render(request, "Linkfeed/index.html", {"auth_token": auth_token})
+    return render(request, "Linkfeed/index.html")
 
 
 def current_user_profile(request):
