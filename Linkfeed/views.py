@@ -62,7 +62,7 @@ def profile(request, username):
             return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
 
 
-    
+
 def feed(request):
     if request.user.is_authenticated:
         try:
@@ -71,8 +71,9 @@ def feed(request):
             # Retrieve the IDs of Linkfeed that the current user is following
             following_ids = profile.following.values_list('id', flat=True)
             # Retrieve posts from the Linkfeed that the current user is following
-            posts = Post.objects.filter(Q(user__id__in=following_ids) | Q(is_imported_rss_feed_post=True)).order_by('-timestamp')
-
+            posts = Post.objects.filter(
+                Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
+            ).order_by('-timestamp')
 
             imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
 
@@ -80,12 +81,13 @@ def feed(request):
             for post in posts:
                 post.liked = post.likes.filter(id=request.user.id).exists()
 
-            return render(request, 'Linkfeed/feed.html', {'posts': posts,'imported_feeds': imported_rss_feeds})
+            return render(request, 'Linkfeed/feed.html', {'posts': posts, 'imported_feeds': imported_rss_feeds})
         except Profile.DoesNotExist:
             # Handle the case where the user doesn't have a profile
             return redirect('login')  # Redirect to login page or handle as appropriate
     else:
         return redirect('login')
+
 
 
 
@@ -187,22 +189,28 @@ def add_comment(request, post_id):
         return redirect("post", post_id=post_id)
     # Handle other HTTP methods if necessary
 
+from django.shortcuts import redirect
+from django.contrib import messages
+
 def delete_comment(request, comment_id):
-    if request.method == "DELETE":
+    if request.method == "POST":  # Change to POST method
         comment = get_object_or_404(Comment, id=comment_id)
         # Check if the user is authenticated
         if request.user.is_authenticated:
             # Check if the user is the owner of the comment or the owner of the post
             if comment.user == request.user or comment.post.user == request.user:
                 comment.delete()
-                # Return a JSON response indicating success
-                return JsonResponse({'message': 'Comment deleted successfully.'})
+                # Redirect to the previous page
+                return redirect(request.META.get('HTTP_REFERER', '/'))
             else:
-                # Return a forbidden response if the user is not authorized
-                return JsonResponse({'error': 'You are not authorized to delete this comment.'}, status=403)
+                # Handle unauthorized deletion
+                messages.error(request, 'You are not authorized to delete this comment.')
         else:
-            # Return a forbidden response if the user is not authenticated
-            return JsonResponse({'error': 'You must be logged in to delete a comment.'}, status=403)
+            # Handle authentication error
+            messages.error(request, 'You must be logged in to delete a comment.')
+    # If the request method is not POST or deletion fails, redirect to the previous page
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
 
 
 
