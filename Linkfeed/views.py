@@ -23,6 +23,9 @@ def index(request):
         return redirect('profile', username=request.user.username)
     else:
         return redirect('login')
+    
+def landing(request):
+    return render(request, "Linkfeed/index.html")
 
 @login_required
 def current_user_profile(request):

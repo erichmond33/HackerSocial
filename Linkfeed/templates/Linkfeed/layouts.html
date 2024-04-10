@@ -20,7 +20,7 @@
 
 <body>
     <div id="mySidebar" class="sidebar">
-        <a href="{% url 'index' %}" target="_blank"><h1 id="logo">Linkfeed</h1></a>
+        <a href="{% url 'landing' %}" target="_blank"><h1 id="logo">Linkfeed</h1></a>
         {% block nav %}
         {% endblock %}
     </div>
@@ -28,17 +28,13 @@
     <div class="user-profile-info">
         <div class="row">
             <div class="col-9">
-                {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' %}
+                {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'current_user_feed' or request.resolver_match.url_name == 'feed' %}
                 <h1 id="username-header" class="header">
                     <a href="{% url 'feed' profile.user.username %}">{{ profile.user.username }}</a>
                 </h1>
-                {% elif user.is_authenticated %}
-                <h1 id="username-header" class="header">
-                    <a href="{% url 'profile' profile.user.username %}">{{ profile.user.username }}</a>
-                </h1>
                 {% else %}
                     <h1 id="username-header" class="header">
-                        <a href="{% url 'index' %}">Linkfeed</a>
+                        <a href="{% url 'landing' %}">Linkfeed</a>
                     </h1>
                 {% endif %}
             </div>
