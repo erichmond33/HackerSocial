@@ -91,3 +91,10 @@ class ImportedRSSFeed(models.Model):
 
     def __str__(self):
         return f"Imported RSS Feed for {self.user.username}: {self.link}"
+
+class UserCSS(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    link = models.URLField()
+
+    def __str__(self):
+        return f"Imported CSS STyle for {self.user.username}: {self.link}"

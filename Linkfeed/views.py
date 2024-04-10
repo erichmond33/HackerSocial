@@ -10,8 +10,8 @@ from django.contrib.auth.decorators import login_required
 from .models import User, Post, Profile, Comment, PostLike
 
 from django.http import Http404
-from .forms import RSSFeedForm 
-from .models import RSSFeed
+from .forms import RSSFeedForm, UserCSSForm 
+from .models import RSSFeed, UserCSS
 import feedparser
 from .forms import ImportedRSSFeedForm
 from .models import ImportedRSSFeed
@@ -374,3 +374,42 @@ def delete_imported_feed(request, feed_id):
         else:
             # Return a forbidden response if the user is not the owner of the feed
             return HttpResponseForbidden("You are not authorized to delete this feed.")
+
+@login_required
+#def upload_css(request):
+#    user = request.user
+#    if request.method == 'POST':
+#        form = UserCSSForm(request.POST)
+#
+#        if form.is_valid():
+#            # Get the form data
+#            css_link = form.cleaned_data['link']
+#            # Save the link into the database
+#            user_css = form.save(commit=False)
+#            
+#            user_css.user = request.user
+#            user_css.save()
+#            UserCSS.objects.create(user, css_link)
+#            return render(request, 'Linkfeed/upload_css.html', {'user_css': user_css})
+#
+#            # //return HttpResponseRedirect('/feed/')  # Redirect to feed page
+#    else:
+#        form = UserCSSForm()
+
+@login_required
+def upload_css(request):
+    if request.method == 'POST':
+        form = UserCSSForm(request.POST)
+        if form.is_valid():
+            # Save the link into the database
+            user_css = form.save(commit=False)
+            user_css.user = request.user
+            user_css.save()
+            # Redirect to a success page or wherever appropriate
+            return redirect('success_page')  # Replace 'success_page' with the name of your success page URL
+    else:
+        form = UserCSSForm()
+    return render(request, 'Linkfeed/upload_css.html', {'form': form})
+
+
+
