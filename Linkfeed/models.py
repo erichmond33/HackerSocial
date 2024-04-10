@@ -66,6 +66,7 @@ class Comment(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # website = models.URLField(blank=True, null=True)
     follower = models.ManyToManyField(User, blank=True, related_name="follower_user")
     following = models.ManyToManyField(User, blank=True, related_name="following_user")
 

@@ -1,29 +1,117 @@
 {% comment %} {% load static %} {% endcomment %}
 {%load static %}
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'Linkfeed/style.css' %}" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- <link href="{% static 'Linkfeed/bootstrap-grid.css' %}" rel="stylesheet"> -->
     <title>Document</title>
     {% block styles %}
     {% endblock %}
 
-    
+
     {% block head %}
     {% endblock %}
 </head>
+
 <body>
+    <div id="mySidebar" class="sidebar">
+        <a href="{% url 'landing' %}" target="_blank"><h1 id="logo">Linkfeed</h1></a>
+        {% block nav %}
+        {% endblock %}
+    </div>
+
+    <div class="user-profile-info">
+        <div class="row">
+            <div class="col-9">
+                {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'current_user_feed' or request.resolver_match.url_name == 'feed' %}
+                <h1 id="username-header" class="header">
+                    <a href="{% url 'feed' profile.user.username %}">{{ profile.user.username }}</a>
+                </h1>
+                {% else %}
+                    <h1 id="username-header" class="header">
+                        <a href="{% url 'landing' %}">Linkfeed</a>
+                    </h1>
+                {% endif %}
+            </div>
+            <div class="col-3 d-flex justify-content-end align-items-center">
+                <!-- <button class="open-btn" id="open-btn" onclick="openNav()"><img src="{% static 'Linkfeed/burger.svg' %}" alt="menu" width="32" height="32"></button> -->
+                <button class="open-btn" id="open-btn" onclick="openNav()"><h1 id="nav-header" class="header">¬</h1></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openNav() {
+            // Check if the width of side bar > 0
+            if (document.getElementById("mySidebar").style.width > "0px") {
+                document.getElementById("mySidebar").style.width = "0px";
+                document.getElementById("open-btn").innerHTML = '<h1 id="nav-header" class="header">¬</h1>';
+            }
+            else {
+                document.getElementById("mySidebar").style.width = "250px";
+                document.getElementById("open-btn").innerHTML = '<h1 id="nav-header" class="header">x</h1>';
+            }
+        }
+    </script>
+
+    <style>
+        #open-btn {
+            background-color: transparent;
+            border: transparent;
+        }
+        #open-btn:focus {
+            background-color: transparent;
+            border: transparent;
+            outline: none;
+        }
+        #logo {
+            color:black;
+            font-family: Sabado;
+        }
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            left: 0;
+            background-color: white;
+            overflow-x: hidden;
+            transition: 0.3s;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: left;
+            z-index: 2;
+            box-shadow: 0 0 1em 0 rgba(0,0,0,0.5);
+        }
+        .sidebar a {
+            display: block;
+            padding-block-start: 10px;
+            padding-block-end: 10px;
+            padding-left: 20px;
+            transition: 0.2s;
+            text-align: left;
+            font-family: Nexa;
+        }
+        .sidebar a:hover {
+            color: #EA322E;
+            background-color: #f1f1f1;
+        }
+    </style>
 
     {% block body %}
     {% endblock %}
 
 
-      <!-- Bootstrap JS and dependencies -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 </body>
+
 </html>

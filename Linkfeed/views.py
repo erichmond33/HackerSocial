@@ -19,79 +19,47 @@ from .models import ImportedRSSFeed
 from django.db.models import Q
 
 
-@login_required
 def index(request):
-    # Retrieve the authentication token from the session
-    return render(request, "Linkfeed/index.html")
-
-
-def current_user_profile(request):
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse("login"))
-    else:
-        try:
-            posts = Post.objects.filter(user=request.user).order_by('-timestamp')
-            profile = get_object_or_404(Profile, user=request.user)
-
-            # Check if the current user has liked each post
-            for post in posts:
-                post.liked = post.likes.filter(id=request.user.id).exists()
-
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
-        except Http404:
-            # Handle the case where RSSFeed object does not exist for the user
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
-
-
-def profile(request, username):
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse("login"))
-    else:
-        profile_user = get_object_or_404(User, username=username)
-        # Check if the requested profile is the profile of the logged-in user
-        if profile_user == request.user:
-            return redirect('current_user_profile')
-        else:
-            posts = Post.objects.filter(user=profile_user).order_by('-timestamp')
-            profile = get_object_or_404(Profile, user=profile_user)
-            # Check if the current user has liked each post
-            for post in posts:
-                post.liked = post.likes.filter(id=request.user.id).exists()
-
-
-            return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
-
-
-
-def feed(request):
     if request.user.is_authenticated:
-        try:
-            # Retrieve the profile associated with the current user
-            profile = Profile.objects.get(user=request.user)
-            # Retrieve the IDs of Linkfeed that the current user is following
-            following_ids = profile.following.values_list('id', flat=True)
-            # Retrieve posts from the Linkfeed that the current user is following
-            posts = Post.objects.filter(
-                Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
-            ).order_by('-timestamp')
-
-            imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
-
-            # Check if the current user has liked each post
-            for post in posts:
-                post.liked = post.likes.filter(id=request.user.id).exists()
-
-            return render(request, 'Linkfeed/feed.html', {'posts': posts, 'imported_feeds': imported_rss_feeds})
-        except Profile.DoesNotExist:
-            # Handle the case where the user doesn't have a profile
-            return redirect('login')  # Redirect to login page or handle as appropriate
+        return redirect('profile', username=request.user.username)
     else:
         return redirect('login')
+    
+def landing(request):
+    return render(request, "Linkfeed/index.html")
 
+@login_required
+def current_user_profile(request):
+    user = request.user
+    return redirect('profile', username=user.username)
 
+def profile(request, username):
+    user = User.objects.get(username=username)
+    posts = Post.objects.filter(user=user)
+    profile = Profile.objects.get(user=user)
 
+    # Check if we are following them
+    following = False
+    if request.user.is_authenticated:
+        if request.user in profile.follower.all():
+            following = True
 
+    return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "following": following})
 
+@login_required
+def current_user_feed(request):
+    user = request.user
+    return redirect('feed', username=user.username)
+    
+def feed(request, username):
+    user = User.objects.get(username=username)
+    posts = Post.objects.filter(user=user)
+    profile = Profile.objects.get(user=user)
+
+    # Order posts reverse chronologically
+    posts = posts.order_by("timestamp").all()
+
+    return render(request, "Linkfeed/feed.html", {"posts": posts, "profile": profile})
 
 def login_view(request):
     if request.method == "POST":
@@ -101,8 +69,9 @@ def login_view(request):
         if user is not None:
             login(request, user)
             # Pass the authentication token to the session
-            request.session['auth_token'] = request.session.session_key
-            return HttpResponseRedirect(reverse("index"))
+            # request.session['auth_token'] = request.session.session_key
+            # return HttpResponseRedirect(reverse("index"))
+            return redirect('profile', username=username)
         else:
             return render(request, "Linkfeed/login.html", {
                 "message": "Invalid credentials."
@@ -296,7 +265,6 @@ def following_view(request, username):
     return render(request, 'Linkfeed/following.html', {'following': following})
 
 
-
 @login_required
 def follow_view(request, username):
     if not request.user.is_authenticated:
@@ -322,8 +290,25 @@ def follow_view(request, username):
 
         # Redirect to the profile of the user being followed or unfollowed
         return HttpResponseRedirect(reverse('profile', args=[username]))
+    
+@login_required
+def follow_or_unfollow(request, username):
+    # Retrieve the profile of the user to follow
+    profile_to_follow = Profile.objects.get(user__username=username)
+    profile = Profile.objects.get(user=request.user)
 
+    # Check if the logged-in user is already following the profile
+    if request.user in profile_to_follow.follower.all():
+        # User is already following, so unfollow
+        profile_to_follow.follower.remove(request.user)
+        profile.following.remove(profile_to_follow.user)
+    else:
+        # User is not following, so follow
+        profile_to_follow.follower.add(request.user)
+        profile.following.add(profile_to_follow.user)
 
+    # Render the same page after following or unfollowing
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('profile')))
 
 def mirror_rss_feed(request):
     form = RSSFeedForm(request.POST or None)
