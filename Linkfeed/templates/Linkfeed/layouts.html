@@ -29,17 +29,22 @@
         <div class="row">
             <div class="col-9">
                 {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' %}
-                <h1 id="username-header">
+                <h1 id="username-header" class="header">
                     <a href="{% url 'feed' profile.user.username %}">{{ profile.user.username }}</a>
                 </h1>
-                {% else %}
-                <h1 id="username-header">
-                    <a href="{% url 'profile' %}">{{ profile.user.username }}</a>
+                {% elif user.is_authenticated %}
+                <h1 id="username-header" class="header">
+                    <a href="{% url 'profile' profile.user.username %}">{{ profile.user.username }}</a>
                 </h1>
+                {% else %}
+                    <h1 id="username-header" class="header">
+                        <a href="{% url 'index' %}">Linkfeed</a>
+                    </h1>
                 {% endif %}
             </div>
             <div class="col-3 d-flex justify-content-end align-items-center">
-                <button class="open-btn" id="open-btn" onclick="openNav()"><img src="{% static 'Linkfeed/burger.svg' %}" alt="menu" width="32" height="32"></button>
+                <!-- <button class="open-btn" id="open-btn" onclick="openNav()"><img src="{% static 'Linkfeed/burger.svg' %}" alt="menu" width="32" height="32"></button> -->
+                <button class="open-btn" id="open-btn" onclick="openNav()"><h1 id="nav-header" class="header">¬</h1></button>
             </div>
         </div>
     </div>
@@ -49,11 +54,11 @@
             // Check if the width of side bar > 0
             if (document.getElementById("mySidebar").style.width > "0px") {
                 document.getElementById("mySidebar").style.width = "0px";
-                document.getElementById("open-btn").innerHTML = '<img src="{% static "Linkfeed/burger.svg" %}" alt="menu" width="32" height="32">';
+                document.getElementById("open-btn").innerHTML = '<h1 id="nav-header" class="header">¬</h1>';
             }
             else {
                 document.getElementById("mySidebar").style.width = "250px";
-                document.getElementById("open-btn").innerHTML = '<img src="{% static "Linkfeed/close.svg" %}" alt="menu" width="32" height="32">';
+                document.getElementById("open-btn").innerHTML = '<h1 id="nav-header" class="header">x</h1>';
             }
         }
     </script>

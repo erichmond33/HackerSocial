@@ -33,13 +33,21 @@
     <div class="col text-center mx-5">
         <a id="following-link" style="cursor: pointer;">Following: {{ profile.following.count }}</a>
     </div>
-    <div class="col text-center follow-button mx-5">
+    <div class="col text-center mx-5 p-0">
         {% if profile.user.username == user.username %}
-        <a href="#" class="">Edit Profile</a>
+        <a href="#" class="follow-button">Edit Profile</a>
         {% elif not following %}
-        <a href="{% url 'follow_or_unfollow' profile.user.username %}">Follow</a>
+        <a href="{% url 'follow_or_unfollow' profile.user.username %}" class="follow-button">Follow</a>
         {% elif following %}
-        <a href="{% url 'follow_or_unfollow' profile.user.username %}">Following</a>
+        <a href="{% url 'follow_or_unfollow' profile.user.username %}" id="following-text" class="follow-button">Following</a>
+        <script>
+            document.getElementById('following-text').addEventListener('mouseover', function() {
+            this.innerHTML = 'Unfollow';
+            });
+            document.getElementById('following-text').addEventListener('mouseout', function() {
+            this.innerHTML = 'Following';
+            });
+        </script>
         {% endif %}
     </div>
 </div>
@@ -58,7 +66,7 @@
                 </div>
             </div>
             <div class="col-3">
-                <button type="submit" class="btn red-button" id="create-post-button">Submit</button>
+                <button type="submit" class="btn red-button" id="create-post-button">Post</button>
             </div>
         </div>
     </form>
@@ -77,21 +85,30 @@
                     </div>
                 </div>
             </a>
-                    <div class="post-actions d-flex justify-content-end align-items-end">
-                        <!-- SVGs for likes, comments, reshares and delete -->
-                        <img src="{% static 'Linkfeed/reshare.svg' %}" width="32" height="32" fill="black" viewBox="0 0 32 32">
-
-                        <img src="{% static 'Linkfeed/like.svg' %}" alt="Like" class="like-svg" width="32" height="32" fill="black" class="bi bi-heart" viewBox="0 0 32 32">
-                        <span>{{ post.total_likes }}</span>
-
-                        <a href="{% url 'post' post.id %}" class="px-2">
-                            <img src="{% static 'Linkfeed/comment.svg' %}" alt="Comment" class="comment-svg" width="26" height="26" fill="black" class="bi bi-chat" viewBox="0 0 32 32">
-                            <span>0</span>
-                        </a>
-
-                        <img src="{% static 'Linkfeed/delete.svg' %}" alt="Delete" class="delete-btn" data-post-id="{{ post.id }}" width="28" height="28" fill="black" class="bi bi-trash" viewBox="0 0 32 32">
-                    </div>
+            <div class="row">
+                <div class="col text-muted">
+                    {{ post.timestamp }}
                 </div>
+                <div class="col post-actions d-flex justify-content-end align-items-end">
+
+                    <img src="{% static 'Linkfeed/reshare.svg' %}" width="32" height="32" fill="black" viewBox="0 0 32 32">
+                    <span>0</span>
+
+                    <img src="{% static 'Linkfeed/like.svg' %}" alt="Like" class="like-svg" width="32" height="32" fill="black"
+                        class="bi bi-heart" viewBox="0 0 32 32">
+                    <span>{{ post.total_likes }}</span>
+            
+                    <a href="{% url 'post' post.id %}" class="px-2">
+                        <img src="{% static 'Linkfeed/comment.svg' %}" alt="Comment" class="comment-svg" width="26" height="26"
+                            fill="black" class="bi bi-chat" viewBox="0 0 32 32">
+                        <span>0</span>
+                    </a>
+            
+                    <img src="{% static 'Linkfeed/delete.svg' %}" alt="Delete" class="delete-btn" data-post-id="{{ post.id }}"
+                        width="28" height="28" fill="black" class="bi bi-trash" viewBox="0 0 32 32">
+                </div>
+            </div>
+        </div>
         {% endfor %}
     </div>
 </div>
