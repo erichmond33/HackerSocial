@@ -88,6 +88,16 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email'
+        ],
+        'AUTH_PARAMS': { 'access_type': 'online' }
+    }  
+}
+
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
