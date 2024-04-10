@@ -36,6 +36,10 @@
     <button id="showImportedFeedsBtn" class="btn btn-primary mr-2" onclick="showImportedFeeds()">Show Imported Feeds</button>
     <!-- Home button -->
     <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
+    <form action="{% url 'refresh_imported_rss_feed' %}" method="POST" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">Refresh RSS Feed</button>
+    </form>
 </div>
 
 <!-- Popup for importing RSS feed -->
@@ -62,7 +66,6 @@
     </div>
 </div>
 
-<!-- Popup for displaying imported feeds -->
 <div id="importedFeedsPopup" class="modal" style="display: none;">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -75,10 +78,13 @@
             <div class="modal-body">
                 {% if imported_feeds %}
                     <ul>
-                        {% for post in posts %}
+                        {% for feed in imported_feeds %}
                             <li class="d-flex justify-content-between align-items-center">
-                                <a href="{{ feed }}" target="_blank">{{ feed }}</a>
-                                <button class="btn btn-danger" onclick="deleteImportedFeed({{ feed.id }})">Delete</button>
+                                <a href="{{ feed.link }}" target="_blank">{{ feed.link }}</a>
+                                <form action="{% url 'delete_imported_feed' feed.id %}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this feed?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
                             </li>
                         {% endfor %}
                     </ul>
@@ -101,47 +107,6 @@
         var popup = document.getElementById("importedFeedsPopup");
         popup.style.display = popup.style.display === "none" ? "block" : "none";
     }
-
-    function deleteImportedFeed(feedId) {
-        var confirmation = confirm("Are you sure you want to delete this feed?");
-        if (confirmation) {
-            fetch('/Linkfeed/delete_imported_feed/' + feedId + '/', {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Handle successful deletion
-                    // Refresh the page to reflect the changes
-                    location.reload();
-                } else {
-                    // Handle deletion error
-                    console.error('Failed to delete feed');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
-    }
-
-    // Add event listeners to username links
-    var usernameLinks = document.querySelectorAll('.username-link');
-    usernameLinks.forEach(link => {
-        link.addEventListener('mouseover', function() {
-            this.style.textDecoration = 'underline';
-        });
-        link.addEventListener('mouseout', function() {
-            this.style.textDecoration = 'none';
-        });
-        link.addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent the default action of the link
-            var username = this.innerText; // Get the username from the link text
-            window.location.href = '/Linkfeed/profile/' + username + '/';
-        });
-    });
 </script>
 
 {% endblock body %}

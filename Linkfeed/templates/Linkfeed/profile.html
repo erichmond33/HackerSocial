@@ -119,6 +119,10 @@
     <button id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="btn btn-info">Mirror RSS Feed</button>
     <a href="{% url 'current_user_feed' %}" class="btn btn-primary">Feed</a>
     <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
+    <form action="{% url 'refresh_mirrored_rss_feed' %}" method="POST" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">Refresh RSS Feed</button>
+    </form>
 </div>
 
 <div id="createPostPopup" class="modal" style="display: none;">
@@ -182,39 +186,6 @@
         var popup = document.getElementById("mirrorRSSFeedPopup");
         popup.style.display = popup.style.display === "none" ? "block" : "none";
     }
-
-    function setupDeleteButtons() {
-        document.querySelectorAll('.delete-btn').forEach(item => {
-            item.addEventListener('click', event => {
-                event.preventDefault();
-                const postId = item.getAttribute('data-post-id');
-                if (confirm("Are you sure you want to delete this post?")) {
-                    fetch("{% url 'delete_post' post_id=0 %}".replace("0", postId), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify({ post_id: postId })
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            item.closest('.list-group-item').remove();
-                        } else {
-                            console.error('Failed to delete post');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-                }
-            });
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        setupDeleteButtons();
-    });
 
     var followersLink = document.getElementById('followers-link');
     followersLink.addEventListener('mouseover', function() {
