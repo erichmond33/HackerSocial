@@ -26,7 +26,7 @@
 
 {% block body %}
 
-<a href="#">https://bloge.li</a>
+<a href="{{profile.link}}">{{profile.link}}</a>
 <div class="row my-4 d-flex justify-content-center align-items-center">
     <div class="col text-center aliing-items-center mx-5">
         <a id="followers-link" style="cursor: pointer;">Followers: {{ profile.follower.count }}</a>
