@@ -27,9 +27,13 @@ class Post(models.Model):
     likes = models.ManyToManyField(User, related_name="blog_posts")
     timestamp = models.DateTimeField(auto_now_add=True)
     is_rss_feed_post = models.BooleanField(default=False)
-    is_imported_rss_feed_post = models.BooleanField(default=False)  # New field
+    is_imported_rss_feed_post = models.BooleanField(default=False)
     imported_rss_feed = models.ForeignKey(ImportedRSSFeed, on_delete=models.SET_NULL, null=True, blank=True, related_name="posts")
+    repost_count = models.IntegerField(default=0)  # New field for repost count
 
+    def total_comments(self):
+        return self.comments.count()
+    
     def total_likes(self):
         return self.likes.count()
 
@@ -57,12 +61,14 @@ class PostLike(models.Model):
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
     body = models.TextField()
     likes = models.IntegerField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.username} : {self.post.title} : {self.body} : {self.timestamp}"
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
