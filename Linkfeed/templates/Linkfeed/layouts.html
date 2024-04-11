@@ -28,9 +28,13 @@
     <div class="user-profile-info">
         <div class="row">
             <div class="col-9">
-                {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'current_user_feed' or request.resolver_match.url_name == 'feed' %}
+                {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' %}
                 <h1 id="username-header" class="header">
                     <a href="{% url 'feed' profile.user.username %}">{{ profile.user.username }}</a>
+                </h1>
+                {% elif request.resolver_match.url_name == 'current_user_feed' or request.resolver_match.url_name == 'feed' %}
+                <h1 id="username-header" class="header">
+                    <a href="{% url 'profile' profile.user.username %}">{{ profile.user.username }}</a>
                 </h1>
                 {% else %}
                     <h1 id="username-header" class="header">
