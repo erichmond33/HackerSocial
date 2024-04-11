@@ -28,38 +28,96 @@ def index(request):
 def landing(request):
     return render(request, "Linkfeed/index.html")
 
-@login_required
 def current_user_profile(request):
-    user = request.user
-    return redirect('profile', username=user.username)
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("login"))
+    else:
+        try:
+            posts = Post.objects.filter(user=request.user).order_by('-timestamp')
+            profile = get_object_or_404(Profile, user=request.user)
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
+
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
+        except Http404:
+            # Handle the case where RSSFeed object does not exist for the user
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
 
 def profile(request, username):
-    user = User.objects.get(username=username)
-    posts = Post.objects.filter(user=user)
-    profile = Profile.objects.get(user=user)
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("login"))
+    else:
+        profile_user = get_object_or_404(User, username=username)
+        # Check if the requested profile is the profile of the logged-in user
+        if profile_user == request.user:
+            return redirect('current_user_profile')
+        else:
+            posts = Post.objects.filter(user=profile_user).order_by('-timestamp')
+            profile = get_object_or_404(Profile, user=profile_user)
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
 
-    # Check if we are following them
-    following = False
-    if request.user.is_authenticated:
-        if request.user in profile.follower.all():
-            following = True
 
-    return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "following": following})
+            return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
+
 
 @login_required
 def current_user_feed(request):
-    user = request.user
-    return redirect('feed', username=user.username)
+    try:
+        # Retrieve the profile associated with the current user
+        profile = Profile.objects.get(user=request.user)
+        # Retrieve the IDs of Linkfeed that the current user is following
+        following_ids = profile.following.values_list('id', flat=True)
+        # Retrieve posts from the Linkfeed that the current user is following
+        posts = Post.objects.filter(
+            Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
+        ).order_by('-timestamp')
+
+        imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
+
+        # Check if the current user has liked each post
+        for post in posts:
+            post.liked = post.likes.filter(id=request.user.id).exists()
+
+        return render(request, 'Linkfeed/feed.html', {'posts': posts, 'imported_feeds': imported_rss_feeds, 'profile': profile})
+    except Profile.DoesNotExist:
+        # Handle the case where the user doesn't have a profile
+        return redirect('login')  # Redirect to login page or handle as appropriate
     
+    
+     
 def feed(request, username):
+    # Retrieve the user object based on the username
     user = User.objects.get(username=username)
-    posts = Post.objects.filter(user=user)
     profile = Profile.objects.get(user=user)
 
-    # Order posts reverse chronologically
-    posts = posts.order_by("timestamp").all()
+    # Retrieve the IDs of Linkfeed that the user is following
+    following_ids = user.profile.following.values_list('id', flat=True)
 
-    return render(request, "Linkfeed/feed.html", {"posts": posts, "profile": profile})
+    # Retrieve posts from the Linkfeed that the user is following and not imported RSS feed posts
+    posts = Post.objects.filter(
+        Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True)
+    ).order_by('-timestamp')
+
+    imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
+
+    # Check if the user has liked each post
+    for post in posts:
+        post.liked = post.likes.filter(id=user.id).exists()
+
+    context = {
+        'posts': posts,
+        'imported_feeds': imported_rss_feeds,
+        'user': user,
+        'profile': profile,  # Add profile to the context
+    }
+    return render(request, 'Linkfeed/other_feed.html', context)
+
+
+
+
 
 def login_view(request):
     if request.method == "POST":
@@ -211,7 +269,28 @@ def edit_post(request, post_id):
             # Handle unauthorized edits
             return HttpResponseForbidden("You are not authorized to edit this post.")
     # Handle other HTTP methods if necessary
+
+
+@login_required
+def edit_profile(request):
+    if request.method == "POST":
+        # Get the current user's profile instance
+        profile = get_object_or_404(Profile, user=request.user)
         
+        # Retrieve the new link from the POST data
+        new_link = request.POST.get('link')
+        
+        # Update the profile link with the new value
+        profile.link = new_link
+        
+        # Save the updated profile
+        profile.save()
+        
+        # Redirect to the profile page after editing
+        return redirect('profile')
+    else:
+        # Handle GET request (display edit profile form)
+        return HttpResponseForbidden("You are not authorized to edit this profile.")
 
 def create_post(request):
     if request.method == "POST":
@@ -387,7 +466,7 @@ def imported_rss_feed(request):
             body = entry.get('link', 'No Link')
             new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=imported_feed)
 
-    return redirect('feed')
+    return redirect('current_user_feed')
 
 
 
@@ -397,7 +476,7 @@ def delete_imported_feed(request, feed_id):
     Post.objects.filter(user=request.user, imported_rss_feed=imported_rss_feed).delete()
     # Delete the imported RSS feed itself
     imported_rss_feed.delete()
-    return redirect('feed')
+    return redirect('current_user_feed')
 
 
 def refresh_mirrored_rss_feed(request):
@@ -439,5 +518,5 @@ def refresh_imported_rss_feed(request):
                 # Create a new post associated with the imported RSS feed
                 new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=imported_feed)
 
-    return redirect('feed')
+    return redirect('current_user_feed')
 

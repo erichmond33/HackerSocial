@@ -30,6 +30,7 @@ urlpatterns = [
     path('delete_imported_feed/<int:feed_id>/', views.delete_imported_feed, name='delete_imported_feed'),
     path('refresh-mirrored-rss-feed/', views.refresh_mirrored_rss_feed, name='refresh_mirrored_rss_feed'),
     path('refresh-imported-rss-feed/', views.refresh_imported_rss_feed, name='refresh_imported_rss_feed'),
+    path("edit_profile/", views.edit_profile, name="edit_profile"),
 ]
          
          

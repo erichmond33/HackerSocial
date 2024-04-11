@@ -2,26 +2,7 @@
 {% load static %}
 
 {% block styles %}
-    <link rel="stylesheet" href="{% static 'Linkfeed/profile.css' %}">
     <style>
-        .user-profile-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 50px;
-            
-        }
-
-        .user-profile-info {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .card-posts {
-            width: 100%;
-            max-width: 900px;
-        }
-
         .fixed-bottom {
             display: flex;
             justify-content: flex-end;
@@ -34,121 +15,187 @@
         .fixed-bottom .btn {
             margin-left: 10px;
         }
-        .card-body {
-            width: 800px;
-        }
+        
     </style>
 {% endblock %}
 
+{% block nav %}
+<a href="{% url 'feed' profile.user.username %}" class="">Feed</a>
+<a id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="">Mirror RSS Feed</a>
+{% endblock %}
+
 {% block body %}
-<div class="user-profile-container">
-    <div class="user-profile-info mb-4">
-        <h2>User Profile</h2>
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Name: {{ profile.user.username }}</h5>
-                <p class="card-text">Bio: (Add bio information here)</p>
-                <div class="row">
-                    <div class="col">
-                        <p id="followers-link" class="card-text text-center" style="cursor: pointer;">Followers: {{ profile.follower.count }}</p>
-                    </div>
-                    <div class="col">
-                        <p id="following-link" class="card-text text-center" style="cursor: pointer;">Following: {{ profile.following.count }}</p>
-                    </div>
+
+<a href="#">https://bloge.li</a>
+<div class="row my-4 d-flex justify-content-center align-items-center">
+    <div class="col text-center aliing-items-center mx-5">
+        <a id="followers-link" style="cursor: pointer;">Followers: {{ profile.follower.count }}</a>
+    </div>
+    <div class="col text-center mx-5">
+        <a id="following-link" style="cursor: pointer;">Following: {{ profile.following.count }}</a>
+    </div>
+    <div class="col text-center mx-5 p-0">
+        {% if profile.user.username == user.username %}
+        <a href="#" class="follow-button">Edit Profile</a>
+        {% elif request.user in profile.follower.all %}
+        <a href="{% url 'follow_or_unfollow' profile.user.username %}" id="following-text" class="follow-button">Following</a>
+        {% else %}
+        <a href="{% url 'follow_or_unfollow' profile.user.username %}"  class="follow-button">Follow</a>
+        <script>
+            document.getElementById('following-text').addEventListener('mouseover', function() {
+            this.innerHTML = 'Unfollow';
+            });
+            document.getElementById('following-text').addEventListener('mouseout', function() {
+            this.innerHTML = 'Following';
+            });
+        </script>
+        {% endif %}
+    </div>
+</div>
+
+{% if profile.user.username == user.username %}
+<div class="create-post p-3">
+    <form class="m-auto pt-3" id="create-post-form" method="post" action="{% url 'create_post' %}">
+        {% csrf_token %}
+        <div class="post-title form-group">
+            <input type="text" id="title-input" class="form-control" name="title" placeholder="Title">
+        </div>
+        <div class="row">
+            <div class="col-9">
+                <div class="post-body form-group">
+                    <input type="url" id="body-input" class="form-control" name="body" placeholder="URL">
                 </div>
-            <!-- Follow button -->
-            {% if request.user != profile.user %}
-                {% if request.user in profile.follower.all %}
-                    <form action="{% url 'follow_profile' profile.user.username%}" method="POST" class="mt-3">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Unfollow</button>
-                    </form>
-                {% else %}
-                    <form action="{% url 'follow_profile' profile.user.username %}" method="POST" class="mt-3">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">Follow</button>
-                    </form>
-                {% endif %}
-            {% endif %}
+            </div>
+            <div class="col-3">
+                <button type="submit" class="btn red-button" id="create-post-button">Post</button>
             </div>
         </div>
-    </div>
-    
-    <div class="card-posts">
-        <h5 class="card-title text-center mb-3">Posts</h5>
-        <div class="list-group list-group-flush">
-            {% for post in posts %}
-            <div class="list-group-item list-group-item-action">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">{{ post.title }}</h6>
-                        <p class="mb-0"><a href="{{ post.body }}">{{ post.body }}</a></p>
-                        <p class="mb-0 text-muted">Likes: {{ post.total_likes }}</p>
-                    </div>
-                    <div>
-                        <a href="{% url 'post' post.id %}" class="btn btn-primary">View Post</a>
-                        {% if post.user == user %}
-                        <button data-post-id="{{ post.id }}" class="delete-btn btn btn-danger">Delete</button>
-                        {% endif %}
-                        <form action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
-                            {% csrf_token %}
-                            {% if post.liked %}
-                              <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-warning btn-sm">Unlike</button> 
-                            {% else %}
-                              <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-outline-primary btn-sm">Like</button>
-                            {% endif %}
-                        </form>
+    </form>
+</div>
+{% endif %}
+
+<div id="posts" class="mt-5">
+    <div class="">
+        {% for post in posts %}
+        <div class="post">
+            <a href="{{ post.body }}" target="_blank" class="wrapped-post-link">
+                <div class="wrapped-post py-3">
+                    <div class="">
+                        <h4 class="post-title">{{ post.title }}</h4>
+                        <p class="post-body">{{ post.body }}</p>
                     </div>
                 </div>
+            </a>
+            <div class="row">
+                <div class="col text-muted">
+                    {{ post.timestamp }}
+                </div>
+                <div class="col post-actions d-flex justify-content-end align-items-end">
+
+                    <img src="{% static 'Linkfeed/reshare.svg' %}" width="32" height="32" fill="black" viewBox="0 0 32 32">
+                    <span>0</span>
+                                        <!-- Form for like/unlike -->
+                    <form id="likeForm{{ post.id }}" action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                        <!-- Hidden input field to hold the post id -->
+                    </form>
+                    {% if post.liked %}
+                    <img src="{% static 'Linkfeed/liked.svg' %}" alt="Like" class="like-svg" width="32" height="32" fill="black"
+                    class="bi bi-heart" viewBox="0 0 32 32" onclick="likePost('{{ post.id }}')">
+                     {% else %}
+                     <img src="{% static 'Linkfeed/like.svg' %}" alt="Like" class="like-svg" width="32" height="32" fill="black"
+                    class="bi bi-heart" viewBox="0 0 32 32" onclick="likePost('{{ post.id }}')">
+                    {% endif%}
+                    <span id="likeCount{{ post.id }}">{{ post.total_likes }}</span>
+                    
+            
+                    <a href="{% url 'post' post.id %}" class="px-2">
+                        <img src="{% static 'Linkfeed/comment.svg' %}" alt="Comment" class="comment-svg" width="26" height="26"
+                            fill="black" class="bi bi-chat" viewBox="0 0 32 32">
+                        <span>0</span>
+                    </a>
+                    
+                </div>
             </div>
-            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+<div class="fixed-bottom">
+    <button id="create-post-btn" onclick="toggleCreatePostPopup()" class="btn btn-success">Create Post</button>
+    <button id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="btn btn-info">Mirror RSS Feed</button>
+    <a href="{% url 'current_user_feed' %}" class="btn btn-primary">Feed</a>
+    <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
+    <form action="{% url 'refresh_mirrored_rss_feed' %}" method="POST" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">Refresh RSS Feed</button>
+    </form>
+</div>
+
+<div id="createPostPopup" class="modal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Post</h5>
+                <button type="button" class="close" onclick="toggleCreatePostPopup()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createPostForm" method="post" action="{% url 'create_post' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="title">Title:</label>
+                        <input type="text" class="form-control" name="title">
+                    </div>
+                    <div class="form-group">
+                        <label for="body">URL:</label>
+                        <input type="url" class="form-control" name="body">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="fixed-bottom">
-    <a href="{% url 'feed' %}" class="btn btn-primary">Feed</a>
-    <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
-    <a href="{% url 'profile' %}" class="btn btn-info">Profile</a>
-    {% if profile.user == user %}
-    <a href="{% url 'create_post'%}" class="btn btn-success">Create Post</a>
-    <a href="{% url 'mirror_rss_feed' %}" class="btn btn-info">Mirror RSS Feed</a>
-    {% endif %}
+
+<div id="mirrorRSSFeedPopup" class="modal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mirror RSS Feed</h5>
+                <button type="button" class="close" onclick="toggleMirrorRSSFeedPopup()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="mirrorRSSFeedForm" method="post" action="{% url 'mirror_rss_feed' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="rssFeedLink">RSS Feed Link:</label>
+                        <input type="url" class="form-control" id="rssFeedLink" name="link" placeholder="Enter RSS Feed link">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mirror</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    function setupDeleteButtons() {
-        document.querySelectorAll('.delete-btn').forEach(item => {
-            item.addEventListener('click', event => {
-                event.preventDefault();
-                const postId = item.getAttribute('data-post-id');
-                if (confirm("Are you sure you want to delete this post?")) {
-                    fetch("{% url 'delete_post' post_id=0 %}".replace("0", postId), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify({ post_id: postId })
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            item.closest('.list-group-item').remove();
-                        } else {
-                            console.error('Failed to delete post');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-                }
-            });
-        });
+    function toggleCreatePostPopup() {
+        var popup = document.getElementById("createPostPopup");
+        popup.style.display = popup.style.display === "none" ? "block" : "none";
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        setupDeleteButtons();
-    });
+    function toggleMirrorRSSFeedPopup() {
+        var popup = document.getElementById("mirrorRSSFeedPopup");
+        popup.style.display = popup.style.display === "none" ? "block" : "none";
+    }
 
     var followersLink = document.getElementById('followers-link');
     followersLink.addEventListener('mouseover', function() {
@@ -176,6 +223,14 @@
         window.location.href = "{% url 'following' profile.user.username %}";
     });
 
+    function likePost(postId) {
+        // Submit the form with corresponding post id
+        document.getElementById('likeForm' + postId).submit();
+    }
+
 </script>
+
+
+
 
 {% endblock body %}
