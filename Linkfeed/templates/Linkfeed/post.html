@@ -107,7 +107,7 @@
     </div>
 </div>
 
-<!-- Comments section -->
+Comments section
 <div class="comments-dropdown comment-border">
     <!-- Render comments here -->
     <div class="scrollable-comments">
@@ -192,6 +192,13 @@
             document.getElementById("deleteCommentForm" + commentId).submit();
         }
     }
+
+    // jQuery to toggle reply form
+    $(document).ready(function() {
+        $('.reply-button').click(function() {
+            $(this).siblings('.reply-form').toggle();
+        });
+    });
 </script>
 
 {% endblock body %}
