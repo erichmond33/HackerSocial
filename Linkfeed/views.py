@@ -44,6 +44,9 @@ def profile(request, username):
         if request.user in profile.follower.all():
             following = True
 
+    # Order posts reverse chronologically
+    posts = posts.order_by("timestamp").all()
+
     return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "following": following})
 
 @login_required
@@ -342,11 +345,11 @@ def mirror_rss_feed(request):
         entries = feed.entries
         
         # Iterate through each entry in reverse order and create a post
-        for entry in reversed(entries):
+        for entry in (entries):
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')  # You can change this to get other fields like summary
             # Create a new post with is_rss_feed_post=True
-            new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True)
+            new_post = Post.objects.create(user=user, title=title, body=body, timestamp=entry.get('published_parsed'), is_rss_feed_post=True)
     else:
         entries = []  # Handle case where RSS feed is not available
 
@@ -385,7 +388,7 @@ def imported_rss_feed(request):
         for entry in reversed(entries):
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')
-            new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=imported_feed)
+            new_post = Post.objects.create(user=user, title=title, body=body, timestamp=entry.get('published_parsed'), is_imported_rss_feed_post=True, imported_rss_feed=imported_feed)
 
     return redirect('feed')
 
