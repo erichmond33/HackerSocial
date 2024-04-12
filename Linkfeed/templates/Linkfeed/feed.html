@@ -8,6 +8,20 @@
 <a href="{% url 'refresh_imported_rss_feed' %}">Refresh RSS Feed</a>
 {% endblock %}
 
+{% block styles %}
+
+<style>
+
+
+    .like-svg:hover, .comment-svg:hover, .delete-btn:hover, .share-svg:hover {
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+</style>
+
+{% endblock styles %}
+
 {% block body %}
 <div class="posts mt-5">
     <div class="">
