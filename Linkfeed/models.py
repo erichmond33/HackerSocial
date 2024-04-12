@@ -1,35 +1,41 @@
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-# Custom User model inheriting from Django's AbstractUser
 class User(AbstractUser):
     pass
 
-# Model for representing Posts
-class Post(models.Model):
-    # ForeignKey to link Post to its creator User
-    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="posts")
-    #Title of post
-    title = models.CharField(blank="Title", max_length=255)
-    # Content of the post
-    body = models.TextField(blank=True)
-    # Number of likes for the post
-    likes = models.ManyToManyField(User, related_name="blog_posts") 
-    # Timestamp indicating when the post was created
-    timestamp = models.DateTimeField(auto_now_add=True)
+class RSSFeed(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    link = models.URLField()
+
+    def __str__(self):
+        return f"{self.user.username}'s RSS Feed: {self.link}"
+
+class ImportedRSSFeed(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    link = models.URLField()
+
+    def __str__(self):
+        return f"Imported RSS Feed for {self.user.username}: {self.link}"
     
+class Post(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
+    title = models.CharField(blank=True, max_length=255)
+    body = models.URLField(blank=True, null=True)
+    likes = models.ManyToManyField(User, related_name="blog_posts")
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_rss_feed_post = models.BooleanField(default=False)
+    is_imported_rss_feed_post = models.BooleanField(default=False)  # New field
+    imported_rss_feed = models.ForeignKey(ImportedRSSFeed, on_delete=models.SET_NULL, null=True, blank=True, related_name="posts")
 
     def total_likes(self):
         return self.likes.count()
 
-    # Method to represent Post objects as a string
     def __str__(self):
         return f"{self.id} : {self.user.username} : id={self.user.id} : {self.title} : {self.body} : {self.likes} : {self.timestamp}"
 
-    # Method to serialize Post objects into dictionary format
     def serialize(self):
         return {
             "id": self.id,
@@ -39,7 +45,7 @@ class Post(models.Model):
             "likes": self.likes,
             "timestamp": self.timestamp.strftime("%b %d %Y, %I:%M %p"),
         }
-    
+
 
 class PostLike(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -47,7 +53,6 @@ class PostLike(models.Model):
 
     def __tr__(self):
         return f"{self.user.username}"
-    
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
@@ -67,8 +72,6 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.username} : Followers = {self.follower.count()} : Following = {self.following.count()}"
 
-    
-
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
@@ -77,17 +80,3 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
-
-class RSSFeed(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    link = models.URLField()
-
-    def __str__(self):
-        return f"{self.user.username}'s RSS Feed: {self.link}"
-
-class ImportedRSSFeed(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    link = models.URLField()
-
-    def __str__(self):
-        return f"Imported RSS Feed for {self.user.username}: {self.link}"

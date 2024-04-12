@@ -16,15 +16,13 @@ import feedparser
 from .forms import ImportedRSSFeedForm
 from .models import ImportedRSSFeed
 
+from django.db.models import Q
 
 
 @login_required
 def index(request):
     # Retrieve the authentication token from the session
-    auth_token = request.session.get('auth_token', None)
-    return render(request, "Linkfeed/index.html", {"auth_token": auth_token})
-
-
+    return render(request, "Linkfeed/index.html")
 
 
 def current_user_profile(request):
@@ -32,24 +30,17 @@ def current_user_profile(request):
         return HttpResponseRedirect(reverse("login"))
     else:
         try:
-            posts = Post.objects.filter(user=request.user)
+            posts = Post.objects.filter(user=request.user).order_by('-timestamp')
             profile = get_object_or_404(Profile, user=request.user)
 
-            # Get the RSS feed associated with the current user
-            rss_feed = RSSFeed.objects.filter(user=request.user).first()
-            
-            # Parse the feed if found, else return empty entries list
-            if rss_feed:
-                feed = feedparser.parse(rss_feed.link)
-                entries = feed.entries
-            else:
-                entries = []  # Handle case where RSS feed is not available
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
 
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "entries": entries})
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
         except Http404:
             # Handle the case where RSSFeed object does not exist for the user
-            entries = []  # No RSS feed available
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "entries": entries})
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
 
 
 def profile(request, username):
@@ -61,20 +52,17 @@ def profile(request, username):
         if profile_user == request.user:
             return redirect('current_user_profile')
         else:
-            posts = Post.objects.filter(user=profile_user)
+            posts = Post.objects.filter(user=profile_user).order_by('-timestamp')
             profile = get_object_or_404(Profile, user=profile_user)
-
-            rss_feed = RSSFeed.objects.filter(user=profile_user).first()
-            if rss_feed:
-                feed = feedparser.parse(rss_feed.link)
-                entries = feed.entries
-            else:
-                entries = []  # Handle case where RSS feed is not available
-
-            return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile, "entries": entries})
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
 
 
-    
+            return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
+
+
+
 def feed(request):
     if request.user.is_authenticated:
         try:
@@ -83,22 +71,23 @@ def feed(request):
             # Retrieve the IDs of Linkfeed that the current user is following
             following_ids = profile.following.values_list('id', flat=True)
             # Retrieve posts from the Linkfeed that the current user is following
-            posts = Post.objects.filter(user__id__in=following_ids)
+            posts = Post.objects.filter(
+                Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
+            ).order_by('-timestamp')
 
             imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
-            # Parse the feed if found, else return empty entries list
-            entries = []
-            # Parse each RSS feed and add its entries to the list
-            for imported_rss_feed in imported_rss_feeds:
-                feed = feedparser.parse(imported_rss_feed.link)
-                entries.extend(feed.entries)
 
-            return render(request, 'Linkfeed/feed.html', {'posts': posts, 'entries': entries, 'imported_feeds': imported_rss_feeds})
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
+
+            return render(request, 'Linkfeed/feed.html', {'posts': posts, 'imported_feeds': imported_rss_feeds})
         except Profile.DoesNotExist:
             # Handle the case where the user doesn't have a profile
             return redirect('login')  # Redirect to login page or handle as appropriate
     else:
         return redirect('login')
+
 
 
 
@@ -200,22 +189,28 @@ def add_comment(request, post_id):
         return redirect("post", post_id=post_id)
     # Handle other HTTP methods if necessary
 
+from django.shortcuts import redirect
+from django.contrib import messages
+
 def delete_comment(request, comment_id):
-    if request.method == "DELETE":
+    if request.method == "POST":  # Change to POST method
         comment = get_object_or_404(Comment, id=comment_id)
         # Check if the user is authenticated
         if request.user.is_authenticated:
             # Check if the user is the owner of the comment or the owner of the post
             if comment.user == request.user or comment.post.user == request.user:
                 comment.delete()
-                # Return a JSON response indicating success
-                return JsonResponse({'message': 'Comment deleted successfully.'})
+                # Redirect to the previous page
+                return redirect(request.META.get('HTTP_REFERER', '/'))
             else:
-                # Return a forbidden response if the user is not authorized
-                return JsonResponse({'error': 'You are not authorized to delete this comment.'}, status=403)
+                # Handle unauthorized deletion
+                messages.error(request, 'You are not authorized to delete this comment.')
         else:
-            # Return a forbidden response if the user is not authenticated
-            return JsonResponse({'error': 'You must be logged in to delete a comment.'}, status=403)
+            # Handle authentication error
+            messages.error(request, 'You must be logged in to delete a comment.')
+    # If the request method is not POST or deletion fails, redirect to the previous page
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
 
 
 
@@ -261,14 +256,26 @@ def create_post(request):
         return render(request, "Linkfeed/create_post.html")
     
 
+
 @login_required
 def like_view(request, pk):
+    # Assuming your Post model and like logic remains the same
     post = get_object_or_404(Post, id=request.POST.get('post_id'))
+
     if post.likes.filter(id=request.user.id).exists():
         post.likes.remove(request.user)
     else:
         post.likes.add(request.user)
-    return HttpResponseRedirect(reverse('post', args=[str(pk)]))
+
+    # Get the referring URL
+    referring_url = request.META.get('HTTP_REFERER')
+
+    # Append the pk parameter to the referring URL
+    redirect_url = f"{referring_url}?pk={pk}" if referring_url else reverse('index')
+
+    # Redirect to the modified URL
+    return HttpResponseRedirect(redirect_url)
+
 
 
 @login_required
@@ -328,18 +335,42 @@ def mirror_rss_feed(request):
             # Check if the user already has an RSS feed stored
             existing_feed = RSSFeed.objects.filter(user=user).first()
             if existing_feed:
+                # Delete all RSS feed posts created from the previous RSS feed link
+                Post.objects.filter(user=user, is_rss_feed_post=True).delete()
                 # Update the existing RSS feed link
                 existing_feed.link = rss_feed_link
                 existing_feed.save()
             else:
                 # Create a new RSS feed entry
                 RSSFeed.objects.create(user=user, link=rss_feed_link)
+
+            # Redirect to the same page to avoid resubmission
             return HttpResponseRedirect(request.path_info)
 
     # Retrieve the updated list of RSS feeds for the user
-    user_rss_feeds = RSSFeed.objects.filter(user=user)
+    rss_feed = RSSFeed.objects.filter(user=request.user).first()
+    if rss_feed:
+        # Delete all RSS feed posts created from the previous RSS feed link
+        Post.objects.filter(user=user, is_rss_feed_post=True).delete()
+
+        feed = feedparser.parse(rss_feed.link)
+        entries = feed.entries
+        
+        # Iterate through each entry in reverse order and create a post
+        for entry in reversed(entries):
+            title = entry.get('title', 'No Title')
+            body = entry.get('link', 'No Link')  # You can change this to get other fields like summary
+            # Create a new post with is_rss_feed_post=True
+            new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True)
+    else:
+        entries = []  # Handle case where RSS feed is not available
 
     return redirect('profile')
+
+
+
+
+
 
 
 
@@ -350,27 +381,78 @@ def imported_rss_feed(request):
     if request.method == 'POST':
         if form.is_valid():
             rss_feed_link = form.cleaned_data['link']
-            # Check if the user already has the same RSS feed link
             existing_feed = ImportedRSSFeed.objects.filter(user=user, link=rss_feed_link).exists()
             if not existing_feed:
-                # Create a new RSS feed entry
-                ImportedRSSFeed.objects.create(user=user, link=rss_feed_link)
+                new_imported_feed = ImportedRSSFeed.objects.create(user=user, link=rss_feed_link)
+                feed = feedparser.parse(rss_feed_link)
+                entries = feed.entries
+                for entry in reversed(entries):
+                    title = entry.get('title', 'No Title')
+                    body = entry.get('link', 'No Link')
+                    # Create a new post and associate it with the imported RSS feed
+                    new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=new_imported_feed)
             return HttpResponseRedirect(request.path_info)
 
-    # Retrieve the list of imported RSS feeds for the user
     user_imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
+    for imported_feed in user_imported_rss_feeds:
+        feed = feedparser.parse(imported_feed.link)
+        entries = feed.entries
+        for entry in reversed(entries):
+            title = entry.get('title', 'No Title')
+            body = entry.get('link', 'No Link')
+            new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=imported_feed)
 
     return redirect('feed')
 
 
+
 def delete_imported_feed(request, feed_id):
-    if request.method == "DELETE":
-        feed = get_object_or_404(ImportedRSSFeed, id=feed_id, user=request.user)
-        # Check if the user is authenticated and is the owner of the feed
-        if feed.user == request.user:
-            feed.delete()
-            # Return a JSON response indicating success
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('feed')))
-        else:
-            # Return a forbidden response if the user is not the owner of the feed
-            return HttpResponseForbidden("You are not authorized to delete this feed.")
+    imported_rss_feed = get_object_or_404(ImportedRSSFeed, id=feed_id, user=request.user)
+    # Delete posts associated with the imported RSS feed
+    Post.objects.filter(user=request.user, imported_rss_feed=imported_rss_feed).delete()
+    # Delete the imported RSS feed itself
+    imported_rss_feed.delete()
+    return redirect('feed')
+
+
+def refresh_mirrored_rss_feed(request):
+    user = request.user
+    rss_feed = RSSFeed.objects.filter(user=user).first()
+
+    if rss_feed:
+        feed = feedparser.parse(rss_feed.link)
+        entries = feed.entries
+
+        for entry in entries:
+            title = entry.get('title', 'No Title')
+            body = entry.get('link', 'No Link')
+
+            # Check if a post with the same title and body already exists as a mirrored RSS feed post
+            if not Post.objects.filter(user=user, title=title, body=body, is_rss_feed_post=True).exists():
+                # Create a new post with is_rss_feed_post=True
+                new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True)
+    else:
+        entries = []
+
+    return redirect('profile')
+
+
+def refresh_imported_rss_feed(request):
+    user = request.user
+    imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
+
+    for imported_feed in imported_rss_feeds:
+        feed = feedparser.parse(imported_feed.link)
+        entries = feed.entries
+
+        for entry in entries:
+            title = entry.get('title', 'No Title')
+            body = entry.get('link', 'No Link')
+
+            # Check if a post with the same title and body already exists as an imported RSS feed post
+            if not Post.objects.filter(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=imported_feed).exists():
+                # Create a new post associated with the imported RSS feed
+                new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=imported_feed)
+
+    return redirect('feed')
+
