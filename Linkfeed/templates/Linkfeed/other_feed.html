@@ -1,0 +1,103 @@
+{% extends "Linkfeed/layouts.html" %}
+{% load static %}
+
+{% block nav %}
+<a href="{% url 'profile' user.username %}" class="">Profile</a>
+<a href="{% url 'current_user_feed' %}" class="">Back to Your Feed</a>
+<a id="import-rss-feed-btn" onclick="toggleImportRSSFeedPopup()" class="">Import RSS Feed</a>
+<a id="showImportedFeedsBtn" class="" onclick="showImportedFeeds()">Show Imported Feeds</a>
+{% endblock %}
+
+{% block styles %}
+
+<style>
+
+
+    .like-svg:hover, .comment-svg:hover, .delete-btn:hover, .share-svg:hover {
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+</style>
+
+{% endblock styles %}
+
+
+{% block body %}
+<div class="posts mt-5">
+    <div class="">
+        {% for post in posts %}
+        <div class="post">
+            <a href="{{ post.body }}" target="_blank" class="wrapped-post-link">
+                <div class="wrapped-post py-3">
+                    <div class="">
+                        <h4 class="post-title">{{ post.title }}</h4>
+                        <p class="post-body">{{ post.body }}</p>
+                    </div>
+                </div>
+            </a>
+            <div class="row">
+                <div class="col text-muted">
+                    {{ post.timestamp }}
+                </div>
+                <div class="col post-actions d-flex justify-content-end align-items-end">
+
+                    <form id="shareForm{{ post.id }}" action="{% url 'repost' post.pk %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                        <!-- Hidden input field to hold the post id -->
+                    </form>
+                    <img src="{% static 'Linkfeed/reshare.svg' %}" alt="repost" class="share-svg" width="32" height="32" fill="black" viewBox="0 0 32 32" onclick="rePostPost('{{ post.id }}')">
+                    <span>{{post.repost_count}}</span>
+                    <!-- Form for like/unlike -->
+                    <form id="likeForm{{ post.id }}" action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                        <!-- Hidden input field to hold the post id -->
+                    </form>
+                    {% if post.liked %}
+                    <img src="{% static 'Linkfeed/liked.svg' %}" alt="Like" class="like-svg" width="32" height="32" fill="black"
+                    class="bi bi-heart" viewBox="0 0 32 32" onclick="likePost('{{ post.id }}')">
+                     {% else %}
+                     <img src="{% static 'Linkfeed/like.svg' %}" alt="Like" class="like-svg" width="32" height="32" fill="black"
+                    class="bi bi-heart" viewBox="0 0 32 32" onclick="likePost('{{ post.id }}')">
+                    {% endif%}
+                    <span id="likeCount{{ post.id }}">{{ post.total_likes }}</span>
+
+
+                    <a href="{% url 'post' post.id %}" class="px-2">
+                        <img src="{% static 'Linkfeed/comment.svg' %}" alt="Comment" class="comment-svg" width="26" height="26"
+                            fill="black" class="bi bi-chat" viewBox="0 0 32 32">
+                        <span>{{post.total_comments}}</span>
+                    </a>
+                    {% if post.user == user %}
+                    <form id="deleteForm{{ post.id }}" action="{% url 'delete_post' post_id=post.id %}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                    </form>
+
+                    <img src="{% static 'Linkfeed/delete.svg' %}" alt="Delete" class="delete-btn" data-post-id="{{ post.id }}"
+                        width="28" height="28" fill="black" class="bi bi-trash" viewBox="0 0 32 32">
+                    {% endif %}
+                </div>
+            </div>
+            <p id="posted-by-{{ post.id }}" class="mb-0 text-muted posted-by" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ post.user.username }}</span></p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script> 
+    function likePost(postId) {
+    // Submit the form with corresponding post id
+    document.getElementById('likeForm' + postId).submit();
+}
+
+function rePostPost(postId) {
+    // Submit the form with corresponding post id
+    document.getElementById('shareForm' + postId).submit();
+}
+</script>
+
+
+{% endblock body %}
