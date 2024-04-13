@@ -20,16 +20,24 @@ class ImportedRSSFeed(models.Model):
     def __str__(self):
         return f"Imported RSS Feed for {self.user.username}: {self.link}"
     
+from django.db import models
+import datetime
+
 class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
     title = models.CharField(blank=True, max_length=255)
     body = models.URLField(blank=True, null=True)
     likes = models.ManyToManyField(User, related_name="blog_posts")
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=False, null=True)
     is_rss_feed_post = models.BooleanField(default=False)
     is_imported_rss_feed_post = models.BooleanField(default=False)
     imported_rss_feed = models.ForeignKey(ImportedRSSFeed, on_delete=models.SET_NULL, null=True, blank=True, related_name="posts")
     repost_count = models.IntegerField(default=0)  # New field for repost count
+
+    def save(self, *args, **kwargs):
+        if not self.timestamp:
+            self.timestamp = datetime.datetime.now()
+        super(Post, self).save(*args, **kwargs)
 
     def total_comments(self):
         return self.comments.count()
@@ -49,6 +57,7 @@ class Post(models.Model):
             "likes": self.likes,
             "timestamp": self.timestamp.strftime("%b %d %Y, %I:%M %p"),
         }
+
 
 
 class PostLike(models.Model):
