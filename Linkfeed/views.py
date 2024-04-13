@@ -501,6 +501,7 @@ def imported_rss_feed(request):
                             imported_rss_feed=new_imported_feed,
                             timestamp=post_timestamp
                         )
+            refresh_imported_rss_feed(request)
             return HttpResponseRedirect(request.path_info)
 
     user_imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
@@ -526,7 +527,7 @@ def imported_rss_feed(request):
                     imported_rss_feed=imported_feed,
                     timestamp=post_timestamp
                 )
-
+    refresh_imported_rss_feed(request)
     return redirect('current_user_feed')
 
 

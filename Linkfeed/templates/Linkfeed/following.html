@@ -6,6 +6,11 @@
     </style>
 {% endblock %}
 
+{% block nav %}
+<a href="{% url 'current_user_feed' %}" class="">Feed</a>
+<a href="{% url 'profile' %}" class="">Profile</a>
+{% endblock %}
+
 {% block body %}
 <div class="container mt-5">
     <div class="row">
@@ -31,11 +36,6 @@
     </div>
 </div>
 
-<!-- Profile and Feed buttons -->
-<div class="profile-feed-buttons">
-    <button class="btn btn-success profile-button" onclick="redirectToProfile()">Profile</button>
-    <button class="btn btn-primary feed-button" onclick="redirectToFeed()">Feed</button>
-</div>
 
 <!-- JavaScript to redirect to profile and feed pages -->
 <script>

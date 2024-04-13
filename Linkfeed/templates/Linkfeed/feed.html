@@ -2,7 +2,9 @@
 {% load static %}
 
 {% block nav %}
-<a href="{% url 'profile' profile.user.username %}" class="">Profile</a>
+<a href="{% url 'profile' %}" class="">Profile</a>
+<a href="{% url 'following' user.username %}">Following</a>
+<a href="{% url 'followers' user.username %}">Followers</a>
 <a id="import-rss-feed-btn" onclick="toggleImportRSSFeedPopup()" class="">Import RSS Feed</a>
 <a id="showImportedFeedsBtn" class="" onclick="showImportedFeeds()">Show Imported Feeds</a>
 <a href="{% url 'refresh_imported_rss_feed' %}">Refresh RSS Feed</a>
@@ -88,19 +90,6 @@
     </div>
 </div>
 
-<!-- Profile and Import feed buttons -->
-<div class="fixed-bottom mb-3 ml-3">
-    <a href="{% url 'profile' %}" class="btn btn-success mr-2">Profile</a>
-    <button id="import-rss-feed-btn" onclick="toggleImportRSSFeedPopup()" class="btn btn-primary mr-2">Import RSS Feed</button>
-    <!-- Add a button to show imported feeds -->
-    <button id="showImportedFeedsBtn" class="btn btn-primary mr-2" onclick="showImportedFeeds()">Show Imported Feeds</button>
-    <!-- Home button -->
-    <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
-    <form action="{% url 'refresh_imported_rss_feed' %}" method="POST" class="d-inline">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-warning">Refresh RSS Feed</button>
-    </form>
-</div>
 
 <!-- Popup for importing RSS feed -->
 <div id="importRSSFeedPopup" class="modal" style="display: none;">
