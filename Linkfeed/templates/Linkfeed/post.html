@@ -8,6 +8,10 @@
         .child-comment {
             margin-left: 40px; /* Adjust this value to your preference */
         }
+
+        .comment-body {
+            font-family: Arial, sans-serif; /* Change font family for comments */
+        }
         
     </style>
     
@@ -45,13 +49,16 @@
         <div class="likes-text">
             Likes: {{ total_likes }}
             <!-- Button to toggle the add comment popup -->
-            <button class="btn btn-info" onclick="toggleAddCommentPopup()">Add Comment</button>
+            <button class="btn btn-info" onclick="toggleAddCommentPopup()">
+                <i class="fa-regular fa-comment"></i> <!-- Add comment icon -->
+            </button>
             
             <!-- Button to toggle the edit post popup -->
             {% if request.user == post.user %}
-                <button class="btn btn-secondary" onclick="toggleEditPostPopup()">Edit Post</button>
+                <button class="btn btn-secondary" onclick="toggleEditPostPopup()">
+                    <i class="fa-solid fa-pen"></i> <!-- Edit icon -->
+                </button>
             {% endif %}
-        </div>
     </div>
 </div>
 
@@ -100,14 +107,16 @@
                         <label for="comment_body">Comment:</label>
                         <textarea class="form-control" name="comment_body" rows="4" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-comment"></i> <!-- Add icon for submit button -->
+                    </button>    
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-Comments section
+<!-- Comments section -->
 <div class="comments-dropdown comment-border">
     <!-- Render comments here -->
     <div class="scrollable-comments">
@@ -116,19 +125,26 @@ Comments section
                 <div class="card comment-container">
                     <div class="card-body">
                         <p id="comment-username" class="comment-username">Posted by: {{ comment.user.username }} - {{ comment.timestamp }}</p>
-                        <p>{{ comment.body }}</p>
+                        <p class="comment-body">{{ comment.body }}</p>
                         <!-- Add delete button for comment with confirmation -->
                         {% if request.user == post.user or request.user == comment.user %}
                             <form id="deleteCommentForm{{ comment.id }}" action="{% url 'delete_comment' comment.id %}" method="post">
                                 {% csrf_token %}
-                                <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ comment.id }}')">Delete</button>
+                                <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ comment.id }}')">
+                                    <i class="fa-solid fa-trash"></i> <!-- Trashcan icon -->
+                                </button>
                             </form>
                         {% endif %}
-                        <form method="post" action="{% url 'add_comment' post_id=post.id %}" style="margin-left: 20px;">
+                        <button class="btn btn-primary reply-button">
+                            <i class="fa-sregular fa-comment"></i> <!-- Reply icon -->
+                        </button>
+                        <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}" style="margin-left: 20px; display: none;">
                             {% csrf_token %}
                             <input type="hidden" name="parent_comment_id" value="{{ comment.id }}">
                             <textarea name="comment_body"></textarea>
-                            <button type="submit">Reply</button>
+                            <button type="submit">
+                                <i class="fa-regular fa-paper-plane"></i> <!-- Send icon -->
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -138,19 +154,26 @@ Comments section
                 <div class="card comment-container child-comment">
                     <div class="card-body">
                         <p id="comment-username" class="comment-username">Posted by: {{ reply.user.username }} - {{ reply.timestamp }}</p>
-                        <p>{{ reply.body }}</p>
+                        <p class="comment-body">{{ reply.body }}</p>
                         <!-- Add delete button for reply with confirmation -->
                         {% if request.user == post.user or request.user == reply.user %}
                             <form id="deleteCommentForm{{ reply.id }}" action="{% url 'delete_comment' reply.id %}" method="post">
                                 {% csrf_token %}
-                                <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ reply.id }}')">Delete</button>
+                                <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ reply.id }}')">
+                                    <i class="fa-solid fa-trash"></i> <!-- Trashcan icon -->
+                                </button>
                             </form>
                         {% endif %}
-                        <form method="post" action="{% url 'add_comment' post_id=post.id %}" style="margin-left: 20px;">
+                        <button class="btn btn-primary reply-button">
+                            <i class="fa-regular fa-comment-dots"></i> <!-- Reply icon -->
+                        </button>
+                        <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}" style="margin-left: 20px; display: none;">
                             {% csrf_token %}
                             <input type="hidden" name="parent_comment_id" value="{{ reply.parent_comment.id }}">
                             <textarea name="comment_body"></textarea>
-                            <button type="submit">Reply</button>
+                            <button type="submit">
+                                <i class="fa-regular fa-paper-plane"></i> <!-- Send icon -->
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -160,9 +183,6 @@ Comments section
         {% endfor %}
     </div>
 </div>
-
-
-
 
 <!-- JavaScript to toggle edit post popup -->
 <script>

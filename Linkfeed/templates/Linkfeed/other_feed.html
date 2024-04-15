@@ -2,10 +2,11 @@
 {% load static %}
 
 {% block nav %}
-<a href="{% url 'profile' user.username %}" class="">Profile</a>
-<a href="{% url 'current_user_feed' %}" class="">Back to Your Feed</a>
-<a id="import-rss-feed-btn" onclick="toggleImportRSSFeedPopup()" class="">Import RSS Feed</a>
-<a id="showImportedFeedsBtn" class="" onclick="showImportedFeeds()">Show Imported Feeds</a>
+<a href="{% url 'profile' %}" class="">Profile</a>
+<a href="{% url 'current_user_feed' %}" class="">Feed</a>
+<a href="{% url 'profile' profile.user.username %}" class="">{{profile.user.username}}'s Profile</a>
+<a href="{% url 'following' profile.user.username %}">{{profile.user.username}}'s Following</a>
+<a href="{% url 'followers' profile.user.username %}">{{profile.user.username}}'s Followers</a>
 {% endblock %}
 
 {% block styles %}
