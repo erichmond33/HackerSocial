@@ -50,7 +50,9 @@
             Likes: {{ total_likes }}
             <!-- Button to toggle the add comment popup -->
             <button class="btn btn-info" onclick="toggleAddCommentPopup()">
-                <i class="fa-regular fa-comment fa-lg"></i> <!-- Add comment icon -->
+                <svg class="icon">
+                    <use xlink:href="{% static 'C:\Users\5201R\Linkfeed\Linkfeed-1\Linkfeed\static\Linkfeed\images\comment.svg' %}"></use>
+                </svg> <!-- Add comment icon -->
             </button>
             
             <!-- Button to toggle the edit post popup -->
@@ -108,7 +110,9 @@
                         <textarea class="form-control" name="comment_body" rows="4" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-comment fa-lg"></i> <!-- Add icon for submit button -->
+                        <svg class="icon">
+                            <use xlink:href="{% static 'C:\Users\5201R\Linkfeed\Linkfeed-1\Linkfeed\static\Linkfeed\images\comment.svg' %}"></use>
+                        </svg><!-- Add icon for submit button -->
                     </button>    
                 </form>
             </div>
@@ -136,7 +140,9 @@
                             </form>
                         {% endif %}
                         <button class="btn btn-primary reply-button">
-                            <i class="fa-sregular fa-comment fa-lg"></i> <!-- Reply icon -->
+                            <svg class="icon">
+                                <use xlink:href="{% static 'Linkfeed\static\Linkfeed\images\reply.svg' %}"></use>
+                            </svg 
                         </button>
                         <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}" style="margin-left: 20px; display: none;">
                             {% csrf_token %}
