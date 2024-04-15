@@ -111,7 +111,7 @@
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <svg class="icon">
-                            <use xlink:href="{% static 'C:\Users\5201R\Linkfeed\Linkfeed-1\Linkfeed\static\Linkfeed\images\comment.svg' %}"></use>
+                            <use xlink:href="{% static 'Linkfeed\static\Linkfeed\images\send.svg' %}"></use>
                         </svg><!-- Add icon for submit button -->
                     </button>    
                 </form>
@@ -128,14 +128,16 @@
             {% if not comment.parent_comment %}
                 <div class="card comment-container">
                     <div class="card-body">
-                        <p id="comment-username" class="comment-username">Posted by: {{ comment.user.username }} - {{ comment.timestamp }}</p>
+                        <p id="comment-username" class="comment-username" style="font-size: 12px;>Posted by: {{ comment.user.username }} - {{ comment.timestamp }}</p>
                         <p class="comment-body">{{ comment.body }}</p>
                         <!-- Add delete button for comment with confirmation -->
                         {% if request.user == post.user or request.user == comment.user %}
                             <form id="deleteCommentForm{{ comment.id }}" action="{% url 'delete_comment' comment.id %}" method="post">
                                 {% csrf_token %}
                                 <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ comment.id }}')">
-                                    <i class="fa-solid fa-trash fa-lg"></i> <!-- Trashcan icon -->
+                                    <svg class="icon">
+                                        <use xlink:href="{% static 'Linkfeed\static\Linkfeed\images\trashcan.svg' %}"></use>
+                                    </svg></i> <!-- Trashcan icon -->
                                 </button>
                             </form>
                         {% endif %}
