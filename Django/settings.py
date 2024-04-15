@@ -27,7 +27,13 @@ SECRET_KEY = "django-insecure-l4p+leivf2)ww%r0)9f@m_2i@08_8b&gp=$b^t6bp@ty-j_!jp
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+LOGIN_URL = '/Linkfeed/index/'
+SESSION_COOKIE_SAMESITE = 'None'
 
+# SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = False
+SECURE_SSL_REDIRECT = False
 
 # Application definition
 
@@ -64,7 +70,7 @@ TEMPLATES = [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
+                "django.contrib.messages.context_processors.messages"
             ],
         },
     },

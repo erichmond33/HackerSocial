@@ -2,105 +2,165 @@
 {% load static %}
 
 {% block styles %}
-    <link rel="stylesheet" href="{% static 'Linkfeed/profile.css' %}">
+    <style>
+        .fixed-bottom {
+            display: flex;
+            justify-content: flex-end;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .fixed-bottom .btn {
+            margin-left: 10px;
+        }
+
+        .like-svg:hover, .comment-svg:hover, .delete-btn:hover {
+            cursor: pointer;
+            transform: scale(1.1);
+        }
+
+             
+    
+
+        
+    </style>
+{% endblock %}
+
+{% block nav %}
+<a href="{% url 'current_user_feed' %}" class="">Feed</a>
+<a href="{% url 'following' user.username %}">Following</a>
+<a href="{% url 'followers' user.username %}">Followers</a>
+<a id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="">Mirror RSS Feed</a>
+<a href="{% url 'refresh_mirrored_rss_feed' %}" class="">Refresh RSS Feed</a>
+{% if profile.user.username == user.username %}
+<a href="#" class="edit-profile-link" onclick="toggleEditProfilePopup()">Edit Profile</a>
+{% endif %}
 {% endblock %}
 
 {% block body %}
 
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <h2 class="text-center mb-4">User Profile</h2>
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Name: {{ user.username }}</h5>
-                    <p class="card-text">Bio: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                    <div class="row">
-                        <div class="col">
-                            <!-- Make Followers clickable and lead to followers page -->
-                            <p id="followers-link" class="card-text text-center" style="cursor: pointer;">Followers: {{ profile.follower.count }}</p>
-                        </div>
-                        <div class="col">
-                            <!-- Make Following clickable and lead to following page -->
-                            <p id="following-link" class="card-text text-center" style="cursor: pointer;">Following: {{ profile.following.count }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
-                    <h5 class="card-title">Posts</h5>
-                    <div class="list-group list-group-flush">
-                        <!-- Iterate over each post -->
-                        {% for post in posts %}
-                        <a href="{% url 'post' post.id %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    {% if post.title %}
-                                    <h6 class="mb-0">{{ post.title }}</h6>
-                                    {% else %}
-                                    <h6 class="mb-0">Untitled</h6>
-                                    {% endif %}
-                                    <p class="mb-0 text-muted">Likes: {{ post.total_likes }}</p>
-                                </div>
-                                {% if post.user == user %}
-                                <button data-post-id="{{ post.id }}" class="delete-btn btn btn-danger">Delete</button>
-                                {% endif %}
-                            </div>
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            <!-- Section for displaying RSS feeds -->
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h5 class="card-title">RSS Feed</h5>
-                    <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
-                        <!-- Iterate over each feed entry -->
-                        {% for entry in entries %}
-                        <div class="list-group-item">
-                            <h6>{{ entry.title }}</h6>
-                            <p><a href="{{ entry.link }}" target="_blank">{{ entry.link }}</a></p>
-                            <p>Last updated: {{ entry.updated }}</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
+<a href="{{profile.link}}">{{profile.link}}</a>
+<div class="row my-4 d-flex justify-content-center align-items-center">
+    <div class="col text-center aliing-items-center mx-5">
+        <a id="followers-link" style="cursor: pointer;">Followers: {{ profile.follower.count }}</a>
+    </div>
+    <div class="col text-center mx-5">
+        <a id="following-link" style="cursor: pointer;">Following: {{ profile.following.count }}</a>
+    </div>
+    <div class="col text-center mx-5 p-0">
+        {% if profile.user.username == user.username %}
+        <a href="#" class="follow-button" onclick="toggleEditProfilePopup()">Edit Profile</a>
+        {% elif not following %}
+        <a href="{% url 'follow_or_unfollow' profile.user.username %}" class="follow-button">Follow</a>
+        {% elif following %}
+        <a href="{% url 'follow_or_unfollow' profile.user.username %}" id="following-text" class="follow-button">Following</a>
+        <script>
+            document.getElementById('following-text').addEventListener('mouseover', function() {
+            this.innerHTML = 'Unfollow';
+            });
+            document.getElementById('following-text').addEventListener('mouseout', function() {
+            this.innerHTML = 'Following';
+            });
+        </script>
+        {% endif %}
     </div>
 </div>
 
-<div class="fixed-bottom mb-3 mr-3">
-    <button id="create-post-btn" onclick="toggleCreatePostPopup()" class="btn btn-success mr-2">Create Post</button>
-    <!-- Button to mirror RSS feed -->
-    <button id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="btn btn-info mr-2">Mirror RSS Feed</button>
-    <!-- Button to navigate to the feed page -->
-    <a href="{% url 'feed' %}" class="btn btn-primary">Feed</a>
-    <!-- Button to navigate to the home page -->
-    <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
+{% if profile.user.username == user.username %}
+<div class="create-post p-3">
+    <form class="m-auto pt-3" id="create-post-form" method="post" action="{% url 'create_post' %}">
+        {% csrf_token %}
+        <div class="post-title form-group">
+            <input type="text" id="title-input" class="form-control" name="title" placeholder="Title">
+        </div>
+        <div class="row">
+            <div class="col-9">
+                <div class="post-body form-group">
+                    <input type="url" id="body-input" class="form-control" name="body" placeholder="URL">
+                </div>
+            </div>
+            <div class="col-3">
+                <button type="submit" class="btn red-button" id="create-post-button">Post</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<div id="posts" class="mt-5">
+    <div class="">
+        {% for post in posts %}
+        <div class="post">
+            <a href="{{ post.body }}" target="_blank" class="wrapped-post-link">
+                <div class="wrapped-post py-3">
+                    <div class="">
+                        <h4 class="post-title">{{ post.title }}</h4>
+                        <p class="post-body">{{ post.body }}</p>
+                    </div>
+                </div>
+            </a>
+            <div class="row">
+                <div class="col text-muted">
+                    {{ post.timestamp }}
+                </div>
+                <div class="col post-actions d-flex justify-content-end align-items-end">
+
+                    {% comment %} <img src="{% static 'Linkfeed/reshare.svg' %}" width="32" height="32" fill="black" viewBox="0 0 32 32">
+                    <span>0</span> {% endcomment %}
+                    <!-- Form for like/unlike -->
+                    <form id="likeForm{{ post.id }}" action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                        <!-- Hidden input field to hold the post id -->
+                    </form>
+                    {% if post.liked %}
+                    <img src="{% static 'Linkfeed/liked.svg' %}" alt="Like" class="like-svg" width="32" height="32" fill="black"
+                        class="bi bi-heart" viewBox="0 0 32 32" onclick="likePost('{{ post.id }}')">
+                    {% else %}
+                    <img src="{% static 'Linkfeed/like.svg' %}" alt="Like" class="like-svg" width="32" height="32" fill="black"
+                        class="bi bi-heart" viewBox="0 0 32 32" onclick="likePost('{{ post.id }}')">
+                    {% endif%}
+                    <span id="likeCount{{ post.id }}">{{ post.total_likes }}</span>
+
+
+                    <a href="{% url 'post' post.id %}" class="px-2">
+                        <img src="{% static 'Linkfeed/comment.svg' %}" alt="Comment" class="comment-svg" width="26" height="26"
+                            fill="black" class="bi bi-chat" viewBox="0 0 32 32">
+                        <span>{{post.total_comments}}</span>
+                    </a>
+                    <form id="deleteForm{{ post.id }}" action="{% url 'delete_post' post_id=post.id %}" method="POST" class="d-inline"
+                        onsubmit="return confirm('Are you sure you want to delete this post?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                    </form>
+
+                    <img id="delete-img" src="{% static 'Linkfeed/delete.svg' %}" alt="Delete" class="delete-btn" data-post-id="{{ post.id }}" width="28" height="28">
+
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 
-<div id="createPostPopup" class="modal" style="display: none;">
+<!-- Edit Profile Modal -->
+<div id="editProfilePopup" class="modal" style="display: none;">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Create Post</h5>
-                <button type="button" class="close" onclick="toggleCreatePostPopup()">
+                <h5 class="modal-title">Edit Profile</h5>
+                <button type="button" class="close" onclick="toggleEditProfilePopup()">
                     <span>&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <form id="createPostForm" method="post" action="{% url 'create_post'%}">
+                <form id="editProfileForm" method="post" action="{% url 'edit_profile' %}">
                     {% csrf_token %}
                     <div class="form-group">
-                        <label for="title">Title:</label>
-                        <input type="text" class="form-control" name="title">
-                    </div>
-                    <div class="form-group">
-                        <label for="body">Body:</label>
-                        <textarea class="form-control" name="body" rows="5"></textarea>
+                        <label for="profile-link">Profile Link:</label>
+                        <input type="url" class="form-control" id="profile-link" name="link" placeholder="Enter your new profile link">
                     </div>
                     <button type="submit" class="btn btn-primary">Save</button>
                 </form>
@@ -108,7 +168,9 @@
         </div>
     </div>
 </div>
+<!-- End Edit Profile Modal -->
 
+<!-- Mirror RSS Feed Modal -->
 <div id="mirrorRSSFeedPopup" class="modal" style="display: none;">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -131,82 +193,84 @@
         </div>
     </div>
 </div>
+<!-- End Mirror RSS Feed Modal -->
+
 
 <script>
-    // Function to toggle create post popup
     function toggleCreatePostPopup() {
         var popup = document.getElementById("createPostPopup");
         popup.style.display = popup.style.display === "none" ? "block" : "none";
     }
 
-    // Function to toggle mirror RSS feed popup
     function toggleMirrorRSSFeedPopup() {
         var popup = document.getElementById("mirrorRSSFeedPopup");
         popup.style.display = popup.style.display === "none" ? "block" : "none";
     }
 
-    // Function to handle post deletion
-    function setupDeleteButtons() {
-        document.querySelectorAll('.delete-btn').forEach(item => {
-            item.addEventListener('click', event => {
-                event.preventDefault(); // Prevent the default action of the delete button
-                const postId = item.getAttribute('data-post-id');
-                if (confirm("Are you sure you want to delete this post?")) {
-                    fetch("{% url 'delete_post' post_id=0 %}".replace("0", postId), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify({ post_id: postId })
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            item.closest('.list-group-item').remove(); // Remove the deleted post from the DOM
-                        } else {
-                            console.error('Failed to delete post');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-                }
-            });
-        });
+    function toggleEditProfilePopup() {
+        var popup = document.getElementById("editProfilePopup");
+        popup.style.display = popup.style.display === "none" ? "block" : "none";
     }
 
-    // Call setupDeleteButtons when the DOM is ready
-    document.addEventListener("DOMContentLoaded", function() {
-        setupDeleteButtons();
+    var followersLink = document.getElementById('followers-link');
+    followersLink.addEventListener('mouseover', function() {
+        this.style.textDecoration = 'underline';
     });
 
-     // Function to handle hover and click effects for followers link
-     var followersLink = document.getElementById('followers-link');
-     followersLink.addEventListener('mouseover', function() {
-         this.style.textDecoration = 'underline';
-     });
- 
-     followersLink.addEventListener('mouseout', function() {
-         this.style.textDecoration = 'none';
-     });
- 
-     followersLink.addEventListener('click', function() {
-         window.location.href = "{% url 'followers' profile.user.username %}";
-     });
- 
-     // Function to handle hover and click effects for following link
-     var followingLink = document.getElementById('following-link');
-     followingLink.addEventListener('mouseover', function() {
-         this.style.textDecoration = 'underline';
-     });
- 
-     followingLink.addEventListener('mouseout', function() {
-         this.style.textDecoration = 'none';
-     });
- 
-     followingLink.addEventListener('click', function() {
-         window.location.href = "{% url 'following' profile.user.username %}";
-     });
+    followersLink.addEventListener('mouseout', function() {
+        this.style.textDecoration = 'none';
+    });
+
+    followersLink.addEventListener('click', function() {
+        window.location.href = "{% url 'followers' profile.user.username %}";
+    });
+
+    var followingLink = document.getElementById('following-link');
+    followingLink.addEventListener('mouseover', function() {
+        this.style.textDecoration = 'underline';
+    });
+
+    followingLink.addEventListener('mouseout', function() {
+        this.style.textDecoration = 'none';
+    });
+
+    followingLink.addEventListener('click', function() {
+        window.location.href = "{% url 'following' profile.user.username %}";
+    });
+
+    function likePost(postId) {
+        // Submit the form with corresponding post id
+        document.getElementById('likeForm' + postId).submit();
+    }
+
+    function deletePost(postId) {
+        // Display confirmation pop-up
+        var confirmDelete = confirm('Are you sure you want to delete this post?');
+        
+        // If user confirms deletion, submit the form
+        if (confirmDelete) {
+            document.getElementById('deleteForm' + postId).submit();
+        }
+    }
+
+    // Add event listeners to delete buttons
+    var deleteButtons = document.querySelectorAll('.delete-btn');
+    deleteButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var postId = this.getAttribute('data-post-id');
+            deletePost(postId);
+        });
+    });
+
+
+    document.getElementById('delete-img').addEventListener('mouseover', function() {
+        this.src = "{% static 'Linkfeed/deleting.svg' %}";
+    });
+    
+    document.getElementById('delete-img').addEventListener('mouseout', function() {
+        this.src = "{% static 'Linkfeed/delete.svg' %}";
+    });
+    
 </script>
 
 {% endblock body %}
