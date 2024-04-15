@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block styles %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"> -->
 {% endblock %}
 
 {% block nav %}
@@ -16,22 +16,86 @@
 
 {% block body %}
 <div class="container mt-5">
-    <div class="row">
+    <div class="row my-5">
         <div class="col-12 col-lg-7 py-4 px-0">
-            <h1 class="text-left pb-4" id="main-header">Social media meets<br>personal websites</h1>
-            <p class="mx-5 mx-lg-0">Link-focused posts encourage more depth, exploration, connection, and ownership.</p>
-            <ul>
-                <li>Bring comments, likes, reshares, and follows to your static site.</li>
-                <li>Upload custom CSS and follow/mirror RSS feeds.</li>
-                <li>Break away from social media abuse.</li>
+            <h1 class="h1 text-left pb-4" id="main-header">Social media meets<div style="background-color: #EA322E; rotate: .5deg;"><div style="rotate: -.5deg; color: white;">&nbsp;personal websites</div></div></h1>
+            <p class="">Link-focused posts encourage more depth, exploration, connection, and ownership.</p>
+            <ul class="mr-lg-3">
+                <li>💬 Add interaction to your static site: comments, likes, reshares, follows</li>
+                <li>🔗&thinsp;Link-focused posts drive traffic to you and your friend's pages</li>
+                <li>🏴‍☠️ Create seamless personalization with custom CSS</li>
+                <li>✅ Integrate your feed & posts with RSS</li>
             </ul>
-            <div class="text-center">
-                <button id="main-signup">Sign up</button>
+            <div class="">
+                <button class="red-button btn">Sign up</button>
             </div>
         </div>
-        <div class="col-5 py-4 px-0">
-            <img src="{% static 'Linkfeed/landingpage.png' %}" alt="Landing page image" class="img-fluid">
+        <div class="col-md-5 col-12 py-4 px-0">
+            <img src="{% static 'Linkfeed/photos/lp.png' %}" alt="Landing page image" class="img-fluid">
         </div>
+    </div>
+
+    <div class="row my-5">
+        <div class="col-12 col-sm-8 m-auto">
+            <h1>Why</h1>
+            <ul>
+                <li>I love personal websites and the kind of people that build them.</li>
+                <li>There is no good way for me to share my site's content with my friends.</li>
+                <li>Tradition social media discourages links and is attention abusive, yet normal people can't be expected to write backend code.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row my-5">
+        <div class="col-12 mb-5">
+            <h1>How it works</h1>
+        </div>
+        <div class="col-md-6 col-12 mx-auto">
+            <h2>1. <span>Sign in</span></h2>
+            <p>Sign in with your email and password. You can also sign in with your Google account.</p>
+        </div>
+        <div class="col-md-6 col-12 m-auto">
+            <img src="{% static 'Linkfeed/photos/lp.png' %}" alt="Landing page image" class="img-fluid rounded">
+        </div>
+    </div>
+    <div class="row mt-5">
+        <div class="col-md-6 col-12 mx-auto">
+            <h2>2. <span>Copy code to /profile</span></h2>
+            <p>A key feature is imploring users to visit your personal site.
+                Copy this code block into /profile on your own website.</p>
+        </div>
+        <div class="col-md-6 col-12 m-auto">
+            <img src="{% static 'Linkfeed/photos/lp.png' %}" alt="Landing page image" class="img-fluid rounded">
+        </div>
+    </div>
+    <div class="row mt-5">
+        <div class="col-md-6 col-12 mx-auto">
+            <h2>3. <span>Copy code to /feed</span></h2>
+            <p>Just like step 2, copy this code block into /feed.</p>
+        </div>
+        <div class="col-md-6 col-12 m-auto">
+            <img src="{% static 'Linkfeed/photos/lp.png' %}" alt="Landing page image" class="img-fluid rounded">
+        </div>
+    </div>
+    <div class="row mt-5">
+        <div class="col-md-6 col-12 mx-auto">
+            <h2>4. <span>If this is confusing...</span></h2>
+            <p>Feel free to shoot me an <a href="#">email</a>. I'd be happy to help :)</p>
+        </div>
+        <div class="col-md-6 col-12 m-auto">
+            <img src="{% static 'Linkfeed/photos/lp.png' %}" alt="Landing page image" class="img-fluid rounded">
+        </div>
+    </div>
+</div>
+
+<div class="row my-5 pt-5 border-top">
+    <div class="col-sm-6 col-12 mx-auto px-3 px-md-5 d-flex flex-column justify-content-center align-items-center align-items-sm-end">
+        <div><p>This is me.</p>
+        <p>I make stuff.</p>
+        <p>Check it out bloge.li</p></div>
+    </div>
+    <div class="col-sm-6 col-8 mx-auto px-3 px-md-5 d-flex flex-column justify-content-center align-items-center align-items-sm-start">
+        <img id="footer-img" src="{% static 'Linkfeed/photos/pp3.png' %}" alt="Landing page image" class="img-fluid my-3 rounded w-75">
     </div>
 </div>
 
@@ -42,7 +106,7 @@
     }
 
     #main-header {
-        font-size: 3rem;
+        font-size: 3.4rem;
         /* font-size: clamp(1rem, 8vmin, 3rem); */
     }
 
@@ -60,6 +124,10 @@
             font-size: 3rem;
         }
     } */
+
+    #footer-img {
+        max-width: 250px;
+    }
 
     @media (max-width: 768px) {
         #main-header-wrapper {

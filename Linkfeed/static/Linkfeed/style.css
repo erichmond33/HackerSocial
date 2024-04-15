@@ -29,7 +29,16 @@ body{
 	font-weight: 300;
 	overflow-y:scroll;
 }
-
+.vignette {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: white;
+	box-shadow: 0 0 200px rgba(0,0,0,0.3) inset;
+	z-index: -1;
+}
 h1,h2,h3,h4,dt,small,.small,dl#tweetlist dt,footer,label,#commentlist ol li cite,div.blogparent,input[type="submit"]{
 	font-family: Nexa;
 	font-weight:normal;
@@ -37,6 +46,16 @@ h1,h2,h3,h4,dt,small,.small,dl#tweetlist dt,footer,label,#commentlist ol li cite
 	text-align:left;
 }
 
+ul {
+	list-style: none;
+	margin-left: 0;
+	padding-left: 0em;
+  }
+  
+  /* li {
+	padding-left: .7em;
+	text-indent: -.7em;
+  } */
 
 a {
 	color: #EA322E;
@@ -47,7 +66,21 @@ a:visited {
 }
 
 a:hover {
-	color: #EA322E;
+	color: #941100;
+}
+
+button:active {
+	background-color: #941100;
+	border-color: #941100;
+}
+
+button:hover {
+	background-color: #941100;
+	border-color: #941100;
+}
+
+#main-header {
+	width: fit-content;
 }
 
 .red-button {
@@ -67,7 +100,8 @@ a:hover {
 .header {
 	font-family: Sabado, sans-serif;
     font-size: 3.5em;
-	padding-bottom: 10px;
+	padding-bottom: 15px;
+	padding-top: 5px;
 	margin-bottom: 0px;
 	margin-top: 10px;
 	line-height: 80%;
@@ -75,9 +109,15 @@ a:hover {
 }
 
 #nav-header {
-	border: 1px solid black;
-	padding-left: 12px;
-	padding-right: 12px;
+	/* border-left: 1px solid black;
+	border-right: 1px solid black; */
+	padding-left: 20px;
+	padding-right: 20px;
+	line-height: 50%;
+	background-color: #EA322E;
+}
+#nav-header:hover {
+	background-color: #941100;
 }
 
 #username-header a {
@@ -89,7 +129,7 @@ a:hover {
 }
 
 #open-btn {
-	color: #EA322E;
+	color: white;
 }
 
 a.follow-button {
@@ -101,7 +141,8 @@ a.follow-button {
 }
 
 .follow-button:hover {
-	color: black;
+	background-color: #941100;
+	border-color: #941100;
 	text-decoration: none;
 }
 
@@ -124,6 +165,9 @@ a.follow-button {
 
 #create-post-button {
 	width: 100%;
+}
+#create-post-button:hover {
+	color: white;
 }
 
 #posts {
