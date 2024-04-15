@@ -50,13 +50,13 @@
             Likes: {{ total_likes }}
             <!-- Button to toggle the add comment popup -->
             <button class="btn btn-info" onclick="toggleAddCommentPopup()">
-                <i class="fa-regular fa-comment"></i> <!-- Add comment icon -->
+                <i class="fa-regular fa-comment fa-lg"></i> <!-- Add comment icon -->
             </button>
             
             <!-- Button to toggle the edit post popup -->
             {% if request.user == post.user %}
                 <button class="btn btn-secondary" onclick="toggleEditPostPopup()">
-                    <i class="fa-solid fa-pen"></i> <!-- Edit icon -->
+                    <i class="fa-solid fa-pen fa-lg"></i> <!-- Edit icon -->
                 </button>
             {% endif %}
     </div>
@@ -108,7 +108,7 @@
                         <textarea class="form-control" name="comment_body" rows="4" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-comment"></i> <!-- Add icon for submit button -->
+                        <i class="fa-solid fa-comment fa-lg"></i> <!-- Add icon for submit button -->
                     </button>    
                 </form>
             </div>
@@ -131,19 +131,19 @@
                             <form id="deleteCommentForm{{ comment.id }}" action="{% url 'delete_comment' comment.id %}" method="post">
                                 {% csrf_token %}
                                 <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ comment.id }}')">
-                                    <i class="fa-solid fa-trash"></i> <!-- Trashcan icon -->
+                                    <i class="fa-solid fa-trash fa-lg"></i> <!-- Trashcan icon -->
                                 </button>
                             </form>
                         {% endif %}
                         <button class="btn btn-primary reply-button">
-                            <i class="fa-sregular fa-comment"></i> <!-- Reply icon -->
+                            <i class="fa-sregular fa-comment fa-lg"></i> <!-- Reply icon -->
                         </button>
                         <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}" style="margin-left: 20px; display: none;">
                             {% csrf_token %}
                             <input type="hidden" name="parent_comment_id" value="{{ comment.id }}">
                             <textarea name="comment_body"></textarea>
                             <button type="submit">
-                                <i class="fa-regular fa-paper-plane"></i> <!-- Send icon -->
+                                <i class="fa-regular fa-paper-plane fa-lg"></i> <!-- Send icon -->
                             </button>
                         </form>
                     </div>
@@ -160,19 +160,19 @@
                             <form id="deleteCommentForm{{ reply.id }}" action="{% url 'delete_comment' reply.id %}" method="post">
                                 {% csrf_token %}
                                 <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ reply.id }}')">
-                                    <i class="fa-solid fa-trash"></i> <!-- Trashcan icon -->
+                                    <i class="fa-solid fa-trash fa-lg"></i> <!-- Trashcan icon -->
                                 </button>
                             </form>
                         {% endif %}
                         <button class="btn btn-primary reply-button">
-                            <i class="fa-regular fa-comment-dots"></i> <!-- Reply icon -->
+                            <i class="fa-regular fa-comment-dots fa-lg"></i> <!-- Reply icon -->
                         </button>
                         <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}" style="margin-left: 20px; display: none;">
                             {% csrf_token %}
                             <input type="hidden" name="parent_comment_id" value="{{ reply.parent_comment.id }}">
                             <textarea name="comment_body"></textarea>
                             <button type="submit">
-                                <i class="fa-regular fa-paper-plane"></i> <!-- Send icon -->
+                                <i class="fa-regular fa-paper-plane fa-lg"></i> <!-- Send icon -->
                             </button>
                         </form>
                     </div>
