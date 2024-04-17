@@ -112,6 +112,7 @@
                         <!-- Hidden input field to hold the post id -->
                     </form>
                     <img src="{% static 'Linkfeed/reshare.svg' %}" alt="repost" class="share-svg" width="32" height="32" fill="black" viewBox="0 0 32 32" onclick="rePostPost('{{ post.id }}')">
+                    <span>{{post.repost_count}}</span>
                     <form id="likeForm{{ post.id }}" action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
                         {% csrf_token %}
                         <input type="hidden" name="post_id" value="{{ post.id }}">
