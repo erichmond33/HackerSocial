@@ -18,7 +18,7 @@
     {% endblock %}
 </head>
 
-<body>
+<body class="mx-auto">
     <div class="vignette">
         <svg viewBox='0 0 252 252' xmlns='http://www.w3.org/2000/svg'>
             <filter id='noiseFilter'>
@@ -26,7 +26,7 @@
                 <feColorMatrix type='saturate' values='0' />
             </filter>
     
-            <rect width='100%' height='100%' filter='url(#noiseFilter)' opacity='0.25' />
+            <rect height='100%' filter='url(#noiseFilter)' opacity='0.25' />
         </svg>
     </div>
 
@@ -36,28 +36,28 @@
         {% endblock %}
     </div>
 
-    <div class="user-profile-info">
-        <div class="row">
-            <div class="col-9">
-                {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' %}
-                <h1 id="username-header" class="header">
-                    <a href="{% url 'feed' profile.user.username %}">{{ profile.user.username }}</a>
-                </h1>
-                {% elif request.resolver_match.url_name == 'current_user_feed' or request.resolver_match.url_name == 'feed' %}
-                <h1 id="username-header" class="header">
-                    <a href="{% url 'profile' profile.user.username %}">{{ profile.user.username }}</a>
-                </h1>
-                {% else %}
+    <div class="container-fluid px-3">
+            <div class="row">
+                <div class="col-9">
+                    {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' %}
                     <h1 id="username-header" class="header">
-                        <a href="{% url 'landing' %}">Linkfeed</a>
+                        <a href="{% url 'feed' profile.user.username %}">{{ profile.user.username }}</a>
                     </h1>
-                {% endif %}
+                    {% elif request.resolver_match.url_name == 'current_user_feed' or request.resolver_match.url_name == 'feed' %}
+                    <h1 id="username-header" class="header">
+                        <a href="{% url 'profile' profile.user.username %}">{{ profile.user.username }}</a>
+                    </h1>
+                    {% else %}
+                        <h1 id="username-header" class="header">
+                            <a href="{% url 'landing' %}">Linkfeed</a>
+                        </h1>
+                    {% endif %}
+                </div>
+                <div class="col-3 d-flex justify-content-end align-items-center">
+                    <!-- <button class="open-btn" id="open-btn" onclick="openNav()"><img src="{% static 'Linkfeed/burger.svg' %}" alt="menu" width="32" height="32"></button> -->
+                    <button class="open-btn" id="open-btn" onclick="openNav()"><h1 id="nav-header" class="header">¬</h1></button>
+                </div>
             </div>
-            <div class="col-3 d-flex justify-content-end align-items-center">
-                <!-- <button class="open-btn" id="open-btn" onclick="openNav()"><img src="{% static 'Linkfeed/burger.svg' %}" alt="menu" width="32" height="32"></button> -->
-                <button class="open-btn" id="open-btn" onclick="openNav()"><h1 id="nav-header" class="header">¬</h1></button>
-            </div>
-        </div>
     </div>
 
     <script>

@@ -39,5 +39,14 @@ Social media meets personal websites
 
 
 A new social media protocol standard
-- /feed
-- /profile
+- /feed 890-= /profile
+
+
+
+For the links by the emojis, do cards after the how it works sections.
+A pic of the comments, likes, and reshares svgs
+A pic of the same image at the top excpet with custom CSS. Maybe blue Links or something.
+A pic of the RSS modal
+
+
+After cards, put a whole registration form.

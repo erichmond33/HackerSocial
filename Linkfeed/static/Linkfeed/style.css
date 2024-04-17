@@ -19,8 +19,6 @@ html {
 body{
 	max-width:40em;
 	margin:0 auto;
-	padding-right:1em;
-	padding-left: 1em;
 	font-family: Space, sans-serif;
 	font-size:20px;
 	line-height:30px;
@@ -28,6 +26,7 @@ body{
 	color:#000;
 	font-weight: 300;
 	overflow-y:scroll;
+	overflow-x: hidden;
 }
 .vignette {
 	position: fixed;
@@ -79,6 +78,14 @@ button:hover {
 	border-color: #941100;
 }
 
+pre {
+	font-size: 70%;
+	background-color: #1e1e1e;
+	color: white;
+	padding: 5px;
+	border-radius: .25rem;
+}
+
 #main-header {
 	width: fit-content;
 }
@@ -95,6 +102,11 @@ button:hover {
 
 .red-button a:hover {
 	text-decoration: none;
+	color:white;
+}
+
+.red-button:hover {
+	color:white;
 }
 
 .header {
@@ -130,6 +142,8 @@ button:hover {
 
 #open-btn {
 	color: white;
+	padding-left: 0;
+	padding-right: 0;
 }
 
 a.follow-button {
