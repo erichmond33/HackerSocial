@@ -68,14 +68,20 @@ def profile(request, username):
             return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
 
 
+from django.shortcuts import render, redirect
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Q, Count
+from .models import Post, Profile, ImportedRSSFeed  # Assuming your models are in the same app
 
 @login_required
 def current_user_feed(request):
     try:
         # Retrieve the profile associated with the current user
         profile = Profile.objects.get(user=request.user)
+
         # Retrieve the IDs of Linkfeed that the current user is following
         following_ids = profile.following.values_list('id', flat=True)
+
         # Retrieve posts from the Linkfeed that the current user is following
         posts = Post.objects.filter(
             Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
@@ -87,10 +93,26 @@ def current_user_feed(request):
         for post in posts:
             post.liked = post.likes.filter(id=request.user.id).exists()
 
-        return render(request, 'Linkfeed/feed.html', {'posts': posts, 'imported_feeds': imported_rss_feeds, 'profile': profile})
+        # Pagination setup
+        paginator = Paginator(posts, 20)  # 20 posts per page
+        page = request.GET.get('page', 1)
+
+        try:
+            posts = paginator.page(page)
+        except PageNotAnInteger:
+            posts = paginator.page(1)  # Deliver first page
+        except EmptyPage:
+            posts = paginator.page(paginator.num_pages)  # Deliver last page
+
+        return render(request, 'Linkfeed/feed.html', {
+            'posts': posts, 
+            'imported_feeds': imported_rss_feeds, 
+            'profile': profile
+        })
+
     except Profile.DoesNotExist:
-        # Handle the case where the user doesn't have a profile
-        return redirect('login')  # Redirect to login page or handle as appropriate
+        return redirect('login')  
+
     
     
      
