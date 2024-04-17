@@ -18,11 +18,56 @@
             {% csrf_token %}
             <h2>Upload Custom CSS</h2>
             <div class="form-group">
-                {{ form.as_p }}
+                {{ form.link }}
+                {% if form.link.errors %}
+                    <div class="alert alert-danger">
+                        {{ form.link.errors }}
+                    </div>
+                {% endif %}
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
         
+        {% if user_css_content %}
+            <style>
+                {{ user_css_content.link|safe }}
+            </style>
+        {% endif %}
     </div>
 </div>
+
+    {% block scripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to fetch and apply custom CSS
+        function applyCustomCSS() {
+            var linkInput = document.getElementById('id_link'); // Assuming your link input field has id='id_link'
+            var link = linkInput.value.trim(); // Get the value of the link input field
+            
+            if (link) {
+                // Fetch the CSS content from the provided link
+                fetch(link)
+                    .then(response => response.text())
+                    .then(cssContent => {
+                        // Create a style element and set its innerHTML to the fetched CSS content
+                        var style = document.createElement('style');
+                        style.innerHTML = cssContent;
+                        
+                        // Append the style element to the head of the document to apply the CSS
+                        document.head.appendChild(style);
+                    })
+                    .catch(error => console.error('Error fetching CSS:', error));
+            }
+        }
+    
+        // Apply custom CSS when the form is submitted
+        document.querySelector('form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            
+            applyCustomCSS(); // Apply custom CSS
+        });
+    });
+    </script>
+    {% endblock %}
+    
 {% endblock %}
