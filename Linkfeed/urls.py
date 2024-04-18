@@ -31,6 +31,9 @@ urlpatterns = [
     path('landing/', views.landing, name='landing'),
     path('refresh-mirrored-rss-feed/', views.refresh_mirrored_rss_feed, name='refresh_mirrored_rss_feed'),
     path('refresh-imported-rss-feed/', views.refresh_imported_rss_feed, name='refresh_imported_rss_feed'),
+    path("edit_profile/", views.edit_profile, name="edit_profile"),
+    path("repost/<int:post_id>/", views.repost_view, name="repost"),
+
 ]
          
          

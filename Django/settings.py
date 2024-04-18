@@ -28,12 +28,23 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 LOGIN_URL = '/Linkfeed/index/'
-CSRF_COOKIE_SECURE = True
-# SESSION_COOKIE_SAMESITE = 'None'
 
+
+# CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000"]
+# # SESSION_COOKIE_SECURE = False
 # SESSION_COOKIE_SECURE = False
-# SESSION_COOKIE_SECURE = True
+
+
+# SESSION_COOKIE_SAMESITE = 'None'
+# CSRF_COOKIE_SAMESITE = 'None'
+# CSRF_COOKIE_SECURE = True
 # SECURE_SSL_REDIRECT = False
+
+# CSP_DEFAULT_SRC = ("'self'", "http://127.0.0.1:8000")
+
+# CORS (Cross-Origin Resource Sharing)
+# Example allowing CORS from a specific domain
+# CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 

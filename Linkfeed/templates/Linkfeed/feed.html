@@ -2,10 +2,27 @@
 {% load static %}
 
 {% block nav %}
-<a href="{% url 'profile' profile.user.username %}" class="">Profile</a>
+<a href="{% url 'profile' %}" class="">Profile</a>
+<a href="{% url 'following' user.username %}">Following</a>
+<a href="{% url 'followers' user.username %}">Followers</a>
 <a id="import-rss-feed-btn" onclick="toggleImportRSSFeedPopup()" class="">Import RSS Feed</a>
 <a id="showImportedFeedsBtn" class="" onclick="showImportedFeeds()">Show Imported Feeds</a>
+<a href="{% url 'refresh_imported_rss_feed' %}">Refresh RSS Feed</a>
 {% endblock %}
+
+{% block styles %}
+
+<style>
+
+
+    .like-svg:hover, .comment-svg:hover, .delete-btn:hover, .share-svg:hover {
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+</style>
+
+{% endblock styles %}
 
 {% block body %}
 <div class="posts mt-5">
@@ -18,19 +35,6 @@
     </div>
 </div>
 
-<!-- Profile and Import feed buttons -->
-<div class="fixed-bottom mb-3 ml-3">
-    <a href="{% url 'profile' %}" class="btn btn-success mr-2">Profile</a>
-    <button id="import-rss-feed-btn" onclick="toggleImportRSSFeedPopup()" class="btn btn-primary mr-2">Import RSS Feed</button>
-    <!-- Add a button to show imported feeds -->
-    <button id="showImportedFeedsBtn" class="btn btn-primary mr-2" onclick="showImportedFeeds()">Show Imported Feeds</button>
-    <!-- Home button -->
-    <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
-    <form action="{% url 'refresh_imported_rss_feed' %}" method="POST" class="d-inline">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-warning">Refresh RSS Feed</button>
-    </form>
-</div>
 
 <!-- Popup for importing RSS feed -->
 <div id="importRSSFeedPopup" class="modal" style="display: none;">
@@ -96,6 +100,34 @@
     function showImportedFeeds() {
         var popup = document.getElementById("importedFeedsPopup");
         popup.style.display = popup.style.display === "none" ? "block" : "none";
+    }
+    function likePost(postId) {
+        // Submit the form with corresponding post id
+        document.getElementById('likeForm' + postId).submit();
+    }
+
+    function deletePost(postId) {
+        // Display confirmation pop-up
+        var confirmDelete = confirm('Are you sure you want to delete this post?');
+        
+        // If user confirms deletion, submit the form
+        if (confirmDelete) {
+            document.getElementById('deleteForm' + postId).submit();
+        }
+    }
+
+    // Add event listeners to delete buttons
+    var deleteButtons = document.querySelectorAll('.delete-btn');
+    deleteButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var postId = this.getAttribute('data-post-id');
+            deletePost(postId);
+        });
+    });
+
+    function rePostPost(postId) {
+        // Submit the form with corresponding post id
+        document.getElementById('shareForm' + postId).submit();
     }
 </script>
 

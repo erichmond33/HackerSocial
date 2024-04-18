@@ -3,89 +3,56 @@
 
 {% block styles %}
     <link rel="stylesheet" href="{% static 'Linkfeed/post.css' %}">
+
+    <style>
+        .child-comment {
+            margin-left: 40px; /* Adjust this value to your preference */
+        }
+        
+    </style>
+    
+    
 {% endblock %}
 
+{% block nav %}
+<a href="{% url 'current_user_feed'%}" class="">Feed</a>
+<a href="{% url 'current_user_profile'%}" class="">Profile</a>
+{% endblock %}
+
+
 {% block body %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <!-- Move the "Posted by Lime" section outside the card and center it -->
-            <div class="post-header text-center mb-3">
-                <h3>Posted by {{ post.user.username }}:</h3>
-            </div>
-            <div class="card post-container">
-                <div class="card-body">
-                    <!-- Keep the title inside the card -->
-                    <h2 class="post-title">
-                        {% if post.title %}
-                            {{ post.title }}
-                        {% else %}
-                            Untitled
-                        {% endif %}
-                    </h2>
-                    <!-- Move the post body inside the card -->
-                    <div class="post-body post-body-border">
-                        {{ post.body|linebreaks }}
-                    </div>
-                    <!-- Add line between post body and comments -->
-                    <hr>
-                    <!-- Comments dropdown -->
-                    <div id="commentsDropdown" class="comments-dropdown comment-border" style="display: none;">
-                        <!-- Render comments here -->
-                        <div class="scrollable-comments">
-                            {% for comment in post.comments.all %}
-                                <div class="comment-box">
-                                    <p id="comment-username" class="comment-username">Posted by: {{ comment.user.username }} - {{ comment.timestamp }}</p>
-                                    <p>{{ comment.body }}</p>
-                                    <!-- Add delete button for comment with confirmation -->
-                                    {% if request.user == post.user or request.user == comment.user %}
-                                        <form id="deleteCommentForm{{ comment.id }}" action="{% url 'delete_comment' comment.id %}" method="post">
-                                            {% csrf_token %}
-                                            <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ comment.id }}')">Delete</button>
-                                        </form>
-                                    {% endif %}
-                                </div>
-                            {% empty %}
-                                <p>No comments yet.</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <div class="likes-text">
-                        Likes: {{ total_likes }}
-                        <!-- Button to toggle the comments dropdown -->
-                        <button class="btn btn-primary" onclick="toggleComments()">Show Comments</button>
-                        <!-- Button to toggle the add comment popup -->
-                        <button class="btn btn-info" onclick="toggleAddCommentPopup()">Add Comment</button>
-                        
-                        <!-- Button to toggle the edit post popup -->
-                        {% if request.user == post.user %}
-                            <button class="btn btn-secondary" onclick="toggleEditPostPopup()">Edit Post</button>
-                        {% endif %}
-                        <div class="row justify-content-end">
-                            <div class="col-auto">
-                              <form action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
-                                {% csrf_token %}
-                                {% if liked %}
-                                  <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-warning btn-sm">Unlike</button> 
-                                {% else %}
-                                  <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-outline-primary btn-sm">Like</button>
-                                {% endif %}
-                              </form>
-                            </div>
-                          </div>
-                    </div>
-                </div>
-            </div>
+<!-- Move the "Posted by Lime" section outside the card and center it -->
+<div class="post-header text-center mb-3">
+    <h3>Posted by {{ post.user.username }}:</h3>
+</div>
+<div class="card post-container">
+    <div class="card-body">
+        <!-- Keep the title inside the card -->
+        <h2 class="post-title">
+            {% if post.title %}
+                {{ post.title }}
+            {% else %}
+                Untitled
+            {% endif %}
+        </h2>
+        <!-- Move the post body inside the card -->
+        <div class="post-body post-body-border">
+            {{ post.body|linebreaks }}
+        </div>
+        <!-- Add line between post body and comments -->
+        <hr>
+        <!-- Likes section -->
+        <div class="likes-text">
+            Likes: {{ total_likes }}
+            <!-- Button to toggle the add comment popup -->
+            <button class="btn btn-info" onclick="toggleAddCommentPopup()">Add Comment</button>
+            
+            <!-- Button to toggle the edit post popup -->
+            {% if request.user == post.user %}
+                <button class="btn btn-secondary" onclick="toggleEditPostPopup()">Edit Post</button>
+            {% endif %}
         </div>
     </div>
-</div>
-
-<!-- Profile and Feed buttons -->
-<div class="profile-feed-buttons">
-    <button class="btn btn-success profile-button" onclick="redirectToProfile()">Profile</button>
-    <button class="btn btn-primary feed-button" onclick="redirectToFeed()">Feed</button>
-    <!-- Home button -->
-    <a href="{% url 'index' %}" class="btn btn-secondary">Home</a>
 </div>
 
 <!-- Edit post popup form -->
@@ -140,27 +107,65 @@
     </div>
 </div>
 
-<!-- JavaScript to toggle comments dropdown and confirm delete -->
+<!-- Comments section -->
+<div class="comments-dropdown comment-border">
+    <!-- Render comments here -->
+    <div class="scrollable-comments">
+        {% for comment in post.comments.all %}
+            {% if not comment.parent_comment %}
+                <div class="card comment-container">
+                    <div class="card-body">
+                        <p id="comment-username" class="comment-username">Posted by: {{ comment.user.username }} - {{ comment.timestamp }}</p>
+                        <p>{{ comment.body }}</p>
+                        <!-- Add delete button for comment with confirmation -->
+                        {% if request.user == post.user or request.user == comment.user %}
+                            <form id="deleteCommentForm{{ comment.id }}" action="{% url 'delete_comment' comment.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ comment.id }}')">Delete</button>
+                            </form>
+                        {% endif %}
+                        <form method="post" action="{% url 'add_comment' post_id=post.id %}" style="margin-left: 20px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="parent_comment_id" value="{{ comment.id }}">
+                            <textarea name="comment_body"></textarea>
+                            <button type="submit">Reply</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+            <!-- Nested replies section -->
+            {% for reply in comment.replies.all %}
+                <div class="card comment-container child-comment">
+                    <div class="card-body">
+                        <p id="comment-username" class="comment-username">Posted by: {{ reply.user.username }} - {{ reply.timestamp }}</p>
+                        <p>{{ reply.body }}</p>
+                        <!-- Add delete button for reply with confirmation -->
+                        {% if request.user == post.user or request.user == reply.user %}
+                            <form id="deleteCommentForm{{ reply.id }}" action="{% url 'delete_comment' reply.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ reply.id }}')">Delete</button>
+                            </form>
+                        {% endif %}
+                        <form method="post" action="{% url 'add_comment' post_id=post.id %}" style="margin-left: 20px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="parent_comment_id" value="{{ reply.parent_comment.id }}">
+                            <textarea name="comment_body"></textarea>
+                            <button type="submit">Reply</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% empty %}
+            <p>No comments yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+
+
+
+<!-- JavaScript to toggle edit post popup -->
 <script>
-    function toggleComments() {
-        var dropdown = document.getElementById("commentsDropdown");
-        if (dropdown.style.display === "none" || dropdown.style.display === "") {
-            dropdown.style.display = "block";
-        } else {
-            dropdown.style.display = "none";
-        }
-    }
-
-    // Function to redirect to profile page
-    function redirectToProfile() {
-        window.location.href = "{% url 'profile' %}";
-    }
-
-    // Function to redirect to feed page
-    function redirectToFeed() {
-        window.location.href = "{% url 'feed' %}";
-    }
-
     // Function to toggle edit post popup
     function toggleEditPostPopup() {
         var popup = document.getElementById("editPostPopup");
