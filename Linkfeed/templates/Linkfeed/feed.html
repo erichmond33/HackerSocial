@@ -12,17 +12,7 @@
     <div class="">
         {% for post in posts %}
         {% if post.is_imported_rss_feed_post or post.user != user %}
-        <div class="post">
-            <a href="{{ post.body }}" target="_blank" class="wrapped-post-link">
-                <div class="wrapped-post py-3">
-                    <div class="">
-                        <h4 class="post-title">{{ post.title }}</h4>
-                        <p class="post-body">{{ post.body }}</p>
-                    </div>
-                </div>
-            </a>
-            <p id="posted-by-{{ post.id }}" class="mb-0 text-muted posted-by" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ post.user.username }}</span></p>
-        </div>
+            {% include 'Linkfeed/posts.html' %}
         {% endif %}
         {% endfor %}
     </div>

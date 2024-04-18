@@ -1,0 +1,35 @@
+{% load static %}
+
+<div class="post">
+    <a href="{{ post.body }}" target="_blank" class="wrapped-post-link">
+        <div class="wrapped-post py-3">
+            <div class="">
+                <h4 class="post-title">{{ post.title }}</h4>
+                <p class="post-body">{{ post.body }}</p>
+            </div>
+        </div>
+    </a>
+    <div class="row">
+        <div class="col text-muted">
+            {{ post.timestamp }}
+        </div>
+        <div class="col post-actions d-flex justify-content-end align-items-end">
+
+            <img src="{% static 'Linkfeed/reshare.svg' %}" width="32" height="32" fill="black" viewBox="0 0 32 32">
+            <span>0</span>
+
+            <img src="{% static 'Linkfeed/like.svg' %}" alt="Like" class="like-svg" width="32" height="32" fill="black"
+                class="bi bi-heart" viewBox="0 0 32 32">
+            <span>{{ post.total_likes }}</span>
+    
+            <a href="{% url 'post' post.id %}" class="px-2">
+                <img src="{% static 'Linkfeed/comment.svg' %}" alt="Comment" class="comment-svg" width="26" height="26"
+                    fill="black" class="bi bi-chat" viewBox="0 0 32 32">
+                <span>0</span>
+            </a>
+    
+            <img src="{% static 'Linkfeed/delete.svg' %}" alt="Delete" class="delete-btn" data-post-id="{{ post.id }}"
+                width="28" height="28" fill="black" class="bi bi-trash" viewBox="0 0 32 32">
+        </div>
+    </div>
+</div>

@@ -56,12 +56,11 @@ def current_user_feed(request):
     
 def feed(request, username):
     user = User.objects.get(username=username)
-    posts = Post.objects.filter(user=user)
     profile = Profile.objects.get(user=user)
-
-    # Order posts reverse chronologically
+    following = profile.following.all()
+    posts = Post.objects.filter(user__in=following)
     posts = posts.order_by("timestamp").all()
-
+    
     return render(request, "Linkfeed/feed.html", {"posts": posts, "profile": profile})
 
 def login_view(request):
