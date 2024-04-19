@@ -143,14 +143,14 @@
                         method="post">
                         {% csrf_token %}
                         <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ comment.id }}')">
-                            <img src="{% static 'Linkfeed/delete.svg' %}" width="32" height="32" fill="black"
+                            <img src="{% static 'Linkfeed/trashcan.svg' %}" width="32" height="32" fill="black"
                                 viewBox="0 0 32 32">
                             <span>0</span>
                         </button>
                     </form>
                     {% endif %}
                     <button class="btn btn-primary reply-button">
-                        <img src="{% static 'Linkfeed\comment.svg' %}" width="32" height="32"
+                        <img src="{% static 'Linkfeed\reply.svg' %}" width="32" height="32"
                             fill="black" viewBox="0 0 32 32">
                         <span>0</span>
                         <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}"
@@ -179,14 +179,14 @@
                         method="post">
                         {% csrf_token %}
                         <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ reply.id }}')">
-                            <img src="{% static 'Linkfeed/delete.svg' %}" width="22" height="22" fill="black"
+                            <img src="{% static 'Linkfeed/trashcan.svg' %}" width="22" height="22" fill="black"
                                 viewBox="0 0 22 22">
                             <span>0</span>
                         </button>
                     </form>
                     {% endif %}
                     <button class="btn btn-primary reply-button">
-                        <img src="{% static 'Linkfeed\comment.svg' %}" width="22" height="22"
+                        <img src="{% static 'Linkfeed\reply.svg' %}" width="22" height="22"
                             fill="black" viewBox="0 0 22 22">
                         <span>0</span> <!-- Reply icon -->
                     </button>
