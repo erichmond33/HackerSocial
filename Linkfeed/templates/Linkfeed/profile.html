@@ -46,21 +46,17 @@
             <a href="{{profile.link}}">{{profile.link}}</a>
         </div>
     </div>
-    <div class="row my-4 d-flex justify-content-center align-items-center">
-        <div class="col text-center aliing-items-center mx-5">
-            <a id="followers-link" style="cursor: pointer;">Followers: {{ profile.follower.count }}</a>
-        </div>
-        <div class="col text-center mx-5">
-            <a id="following-link" style="cursor: pointer;">Following: {{ profile.following.count }}</a>
-        </div>
-        <div class="col text-center mx-5 p-0">
+    <div class="row my-4" id="row-follow">
+        <div class="col d-flex justify-content-around">
+            <a class="row-follow-button" id="followers-link" style="cursor: pointer;">Followers: {{ profile.follower.count }}</a>
+            <a class="row-follow-button" id="following-link" style="cursor: pointer;">Following: {{ profile.following.count }}</a>
             {% if profile.user.username == user.username %}
-            <a href="#" class="follow-button" onclick="toggleEditProfilePopup()">Edit Profile</a>
+            <a href="#" class="row-follow-button follow-button" onclick="toggleEditProfilePopup()">Edit Profile</a>
             {% elif not following %}
-            <a href="{% url 'follow_or_unfollow' profile.user.username %}" class="follow-button">Follow</a>
+            <a href="{% url 'follow_or_unfollow' profile.user.username %}" class="row-follow-button follow-button">Follow</a>
             {% elif following %}
             <a href="{% url 'follow_or_unfollow' profile.user.username %}" id="following-text"
-                class="follow-button">Following</a>
+                class="row-follow-button follow-button">Following</a>
             <script>
                 document.getElementById('following-text').addEventListener('mouseover', function () {
                     this.innerHTML = 'Unfollow';
@@ -70,35 +66,49 @@
                 });
             </script>
             {% endif %}
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    // Set the width of the follow button the the width of #following-link
+                    var followButton = document.querySelector('.follow-button');
+                    var followingLink = document.getElementById('following-link');
+                    followButton.style.width = followingLink.offsetWidth + 'px';
+                });
+
+                window.addEventListener("resize", function() {
+                    // Update the width of the follow button on page resize
+                    var followButton = document.querySelector('.follow-button');
+                    var followingLink = document.getElementById('following-link');
+                    followButton.style.width = followingLink.offsetWidth + 'px';
+                });
+            </script>
+            </script>
+            </script>
         </div>
     </div>
 </div>
 
-{% if profile.user.username == user.username %}
-<div class="container-fluid">
-    <div class="create-post p-3">
-        <form class="m-auto pt-3" id="create-post-form" method="post" action="{% url 'create_post' %}">
-            {% csrf_token %}
-            <div class="post-title form-group">
-                <input type="text" id="title-input" class="form-control" name="title" placeholder="Title">
-            </div>
-            <div class="row">
-                <div class="col-9">
-                    <div class="post-body form-group">
-                        <input type="url" id="body-input" class="form-control" name="body" placeholder="URL">
-                    </div>
-                </div>
-                <div class="col-3">
-                    <button type="submit" class="btn red-button" id="create-post-button">Post</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-{% endif %}
-
 <div id="posts" class="mt-5">
     <div class="">
+        {% if profile.user.username == user.username %}
+        <div class="container-fluid">
+            <form class="mx-auto mb-0 pb-5 pt-3 border-bottom" id="create-post-form" method="post" action="{% url 'create_post' %}">
+                {% csrf_token %}
+                <div class="post-title form-group">
+                    <input type="text" id="title-input" class="form-control" name="title" placeholder="Title">
+                </div>
+                <div class="row">
+                    <div class="col-9 pr-sm-4 pr-2">
+                        <div class="post-body form-group">
+                            <input type="url" id="body-input" class="form-control" name="body" placeholder="URL">
+                        </div>
+                    </div>
+                    <div class="col-3 pl-0">
+                        <button type="submit" class="btn red-button" id="create-post-button">Post</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
         {% for post in posts %}
             {% include 'Linkfeed/posts.html' %}
         {% endfor %}

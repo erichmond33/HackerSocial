@@ -38,7 +38,7 @@ body{
 	box-shadow: 0 0 200px rgba(0,0,0,0.3) inset;
 	z-index: -1;
 }
-h1,h2,h3,h4,dt,small,.small,dl#tweetlist dt,footer,label,#commentlist ol li cite,div.blogparent,input[type="submit"]{
+h1,h2,h3,h4,dt,dl#tweetlist dt,footer,label,#commentlist ol li cite,div.blogparent,input[type="submit"]{
 	font-family: Nexa;
 	font-weight:normal;
 	font-style:normal;
@@ -146,17 +146,32 @@ pre {
 	padding-right: 0;
 }
 
-a.follow-button {
+/* #row-follow {
+	font-size: 80%;
+} */
+
+a.row-follow-button.follow-button {
 	border: 1px solid #EA322E;
 	background-color: #EA322E;
-	border-radius: .25rem;
-	padding: 5px 20px 5px 20px;
-	color: white;
+	text-align: center;
 }
 
-.follow-button:hover {
+a.row-follow-button {
+	border: 1px solid #6c757d;
+	background-color: #6c757d;
+	border-radius: .25rem;
+	padding: 5px 10px 5px 10px;
+	color: white;
+	line-height: normal;
+	height: calc(1.5em + .3rem + 2px);
+}
+
+a.follow-button:hover {
 	background-color: #941100;
 	border-color: #941100;
+}
+
+a.row-follow-button:hover {
 	text-decoration: none;
 }
 
@@ -166,19 +181,25 @@ a.follow-button {
 }
 
 #create-post-form {
-	width: 80%;
+	width: 100%;
 }
 
 #title-input {
 	font-size: 1.5rem;
+	height: calc(1.5em + .3rem + 2px);
+	line-height: 100%;
 }
 
 #body-input {
 	font-size: 20px;
+	height: calc(1.5em + .3rem + 2px);
+	line-height: 100%;
 }
 
 #create-post-button {
 	width: 100%;
+	height: calc(1.5em + .3rem + 2px);
+	line-height: 100%;
 }
 #create-post-button:hover {
 	color: white;
@@ -186,6 +207,7 @@ a.follow-button {
 
 #posts {
     width: 100%;
+	background-color: none;
 }
 
 .wrapped-post-link {
@@ -203,21 +225,71 @@ a.follow-button {
 	color: black;
 }
 
-.wrapped-post:hover {
-	background-color: #f1f1f1;
+.wrapped-profile-link:hover {
+	text-decoration: none;
 }
 
-.post {
-    border-bottom: 1px solid black;
+.wrapped-post:hover {
+	background-color: #f8f9fa;
 }
+
+.wrapped-profile:hover {
+	text-decoration: none;
+	background-color: #f8f9fa;
+}
+
+/* .post {
+    border-bottom: 1px solid #a1a1a1;
+} */
 
 .post-title {
     font-family: Nexa, sans-serif;
 }
 
+.post-user {
+	padding: 0;
+	margin: 0;
+}
+
 .post-body {
     z-index: 5;
 	color:#EA322E;
+}
+
+.post-stats {
+	color: #6c757d;
+	/* font-size: 80%; */
+	padding: 0 2.5px 0 2.5px;
+}
+
+.svg {
+	width: 28px;
+}
+
+#post-comment:hover {
+	text-decoration: none;
+	color: #6c757d;
+}
+
+@media (max-width: 456px) {
+	.vignette {
+		box-shadow: 0 0 200px rgba(0,0,0,0.15) inset;
+	}
+	.header {
+		font-size:3em;
+	}
+	#row-follow {
+		font-size: 80%;
+	}
+	a.follow-button {
+		padding: 5px 6.5px 5px 6.5px;
+	}
+	.svg {
+		width: 23px;
+	}
+	.post-stats {
+		font-size: 80%;
+	}
 }
 
 
