@@ -135,33 +135,33 @@
                             {{comment.user.username }} - {{comment.timestamp }}</p>
                         <p class="comment-body">{{ comment.body }}</p>
                     </div>
-                    <!-- Add delete button for comment with confirmation -->
-                    {% if request.user == post.user or request.user == comment.user %}
-                    <form id="deleteCommentForm{{ comment.id }}" action="{% url 'delete_comment' comment.id %}"
-                        method="post">
-                        {% csrf_token %}
-                        <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ comment.id }}')">
-                            <img src="{% static 'Linkfeed/trashcan.svg' %}" width="32" height="32" fill="black"
-                                viewBox="0 0 32 32">
-                        </button>
-                    </form>
-                    {% endif %}
                     <div class="button-group">
-                        <button class="btn btn-primary reply-button">
-                            <img src="{% static 'Linkfeed\reply.svg' %}" width="32" height="32"
-                                fill="black" viewBox="0 0 32 32">
+                        <!-- Add delete button for comment with confirmation -->
+                        {% if request.user == post.user or request.user == comment.user %}
+                        <form id="deleteCommentForm{{ comment.id }}" action="{% url 'delete_comment' comment.id %}"
+                        method="post">
+                            {% csrf_token %}
+                            <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ comment.id }}')">
+                                <img src="{% static 'Linkfeed/trashcan.svg' %}" width="32" height="32" fill="black"
+                                    viewBox="0 0 32 32">
                             </button>
-                            <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}"
-                                style="margin-left: 20px; display: none;">
-                                {% csrf_token %}
-                                <input type="hidden" name="parent_comment_id" value="{{ comment.id }}">
-                                <textarea name="comment_body"></textarea>
-                                <button type="submit">
-                                    <img src="{% static 'Linkfeed/send.svg' %}" width="32" height="32" fill="black"
-                                        viewBox="0 0 32 32"><!-- Send icon -->
-                                </button>
-                            </form>
-                        </div>
+                            <button class="btn btn-primary reply-button">
+                                <img src="{% static 'Linkfeed\reply.svg' %}" width="32" height="32"
+                                    fill="black" viewBox="0 0 32 32">
+                            </button>
+                        </form>
+                        {% endif %}
+                            
+                                <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}"
+                                    style="margin-left: 20px; display: none;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="parent_comment_id" value="{{ comment.id }}">
+                                    <textarea name="comment_body"></textarea>
+                                    <button type="submit">
+                                        <img src="{% static 'Linkfeed/send.svg' %}" width="32" height="32" fill="black"
+                                            viewBox="0 0 32 32"><!-- Send icon -->
+                                    </button>
+                                </form>
                     </div>
                 </div>
             </div>
