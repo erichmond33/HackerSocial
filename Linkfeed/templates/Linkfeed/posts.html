@@ -5,7 +5,7 @@
         <a href="{% url 'profile' post.user.username %}" class="wrapped-profile-link">
             <div class="row wrapped-profile">
                 <div class="col-9">
-                    <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">@{{ post.user.username }}</span></p>
+                    <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ post.user.profile.display_name }} ({{ post.user.profile.link|slice:"8:" }})</span></p>
                 </div>
                 <div class="col-3 text-right">
                     {% if post.is_rss_feed_post %}

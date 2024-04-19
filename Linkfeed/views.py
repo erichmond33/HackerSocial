@@ -169,6 +169,8 @@ logger = logging.getLogger(__name__)
 def register(request):
     if request.method == "POST":
         username = request.POST.get("username")
+        display_name = username
+        link = request.POST.get("link")
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirmation = request.POST.get("confirmation")
@@ -180,8 +182,23 @@ def register(request):
             })
 
         try:
+            username_taken = True
+            while username_taken:
+                try:
+                    user = User.objects.get(username=username)
+                    if user:
+                        # Increment username i.e. username1, username2, username3
+                        username = f"{display_name}{int(username[-1]) + 1 if username[-1].isdigit() else 1}"
+
+                except User.DoesNotExist:
+                    username_taken = False
+
             # Attempt to create new user
             user = User.objects.create_user(username, email, password)
+
+            # Create a Profile instance with the link
+            profile = Profile.objects.create(user=user, link=link, display_name=display_name)
+
             # Log in the user
             login(request, user)
             return HttpResponseRedirect(reverse("index"))
