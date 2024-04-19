@@ -68,14 +68,20 @@ def profile(request, username):
             return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
 
 
+from django.shortcuts import render, redirect
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Q, Count
+from .models import Post, Profile, ImportedRSSFeed  # Assuming your models are in the same app
 
 @login_required
 def current_user_feed(request):
     try:
         # Retrieve the profile associated with the current user
         profile = Profile.objects.get(user=request.user)
+
         # Retrieve the IDs of Linkfeed that the current user is following
         following_ids = profile.following.values_list('id', flat=True)
+
         # Retrieve posts from the Linkfeed that the current user is following
         posts = Post.objects.filter(
             Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
@@ -87,10 +93,26 @@ def current_user_feed(request):
         for post in posts:
             post.liked = post.likes.filter(id=request.user.id).exists()
 
-        return render(request, 'Linkfeed/feed.html', {'posts': posts, 'imported_feeds': imported_rss_feeds, 'profile': profile})
+        # Pagination setup
+        paginator = Paginator(posts, 20)  # 20 posts per page
+        page = request.GET.get('page', 1)
+
+        try:
+            posts = paginator.page(page)
+        except PageNotAnInteger:
+            posts = paginator.page(1)  # Deliver first page
+        except EmptyPage:
+            posts = paginator.page(paginator.num_pages)  # Deliver last page
+
+        return render(request, 'Linkfeed/feed.html', {
+            'posts': posts, 
+            'imported_feeds': imported_rss_feeds, 
+            'profile': profile
+        })
+
     except Profile.DoesNotExist:
-        # Handle the case where the user doesn't have a profile
-        return redirect('login')  # Redirect to login page or handle as appropriate
+        return redirect('login')  
+
     
     
      
@@ -406,18 +428,29 @@ def follow_or_unfollow(request, username):
 
 
 
+
+
 import datetime
+import dateutil.parser 
 
 def parse_timestamp(timestamp_str):
-    formats = ['published', 'pubDate', 'dc:date', 'atom:published', 'dc:created']  # List of possible field names
-    for field_name in formats:
+    formats = [
+        '%Y-%m-%dT%H:%M:%S%z',  # Original format
+        '%a, %d %b %Y %H:%M:%S %Z'  # pubDate format
+    ]
+    for field_name in ['published', 'pubDate', 'dc:date', 'atom:published', 'dc:created']:
         timestamp = timestamp_str.get(field_name)
         if timestamp:
-            try:
-                return datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S%z')
-            except ValueError:
-                continue
+            for fmt in formats:
+                try:
+                    if fmt == '%Y-%m-%dT%H:%M:%S%z':
+                        return datetime.datetime.strptime(timestamp, fmt)
+                    else:
+                        return dateutil.parser.parse(timestamp) 
+                except ValueError:
+                    continue
     return None
+
 
 def mirror_rss_feed(request):
     form = RSSFeedForm(request.POST or None)
@@ -501,7 +534,7 @@ def imported_rss_feed(request):
                             imported_rss_feed=new_imported_feed,
                             timestamp=post_timestamp
                         )
-            refresh_imported_rss_feed(request)
+            # refresh_imported_rss_feed(request)
             return HttpResponseRedirect(request.path_info)
 
     user_imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
@@ -527,7 +560,7 @@ def imported_rss_feed(request):
                     imported_rss_feed=imported_feed,
                     timestamp=post_timestamp
                 )
-    refresh_imported_rss_feed(request)
+    # refresh_imported_rss_feed(request)
     return redirect('current_user_feed')
 
 
@@ -550,18 +583,23 @@ def refresh_mirrored_rss_feed(request):
 
     if rss_feed:
         feed = feedparser.parse(rss_feed.link)
-        entries = feed.entries
 
-        for entry in entries:
+        for entry in reversed(feed.entries):  # Use reversed to get newest posts first
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')
+            post_timestamp = parse_timestamp(entry)  # Extract timestamp
 
-            # Check if a post with the same title and body already exists as a mirrored RSS feed post
+            if post_timestamp is None:
+                post_timestamp = datetime.datetime.now()  # Use current time as fallback
+
             if not Post.objects.filter(user=user, title=title, body=body, is_rss_feed_post=True).exists():
-                # Create a new post with is_rss_feed_post=True
-                new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True)
-    else:
-        entries = []
+                Post.objects.create(
+                    user=user,
+                    title=title,
+                    body=body,
+                    is_rss_feed_post=True,
+                    timestamp=post_timestamp  # Use the extracted timestamp
+                )
 
     return redirect('profile')
 
@@ -572,16 +610,24 @@ def refresh_imported_rss_feed(request):
 
     for imported_feed in imported_rss_feeds:
         feed = feedparser.parse(imported_feed.link)
-        entries = feed.entries
 
-        for entry in entries:
+        for entry in reversed(feed.entries):  # Use reversed to get newest posts first
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')
+            post_timestamp = parse_timestamp(entry)  # Extract timestamp
 
-            # Check if a post with the same title and body already exists as an imported RSS feed post
+            if post_timestamp is None:
+                post_timestamp = datetime.datetime.now()  # Use current time as fallback
+
             if not Post.objects.filter(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=imported_feed).exists():
-                # Create a new post associated with the imported RSS feed
-                new_post = Post.objects.create(user=user, title=title, body=body, is_imported_rss_feed_post=True, imported_rss_feed=imported_feed)
+                Post.objects.create(
+                    user=user,
+                    title=title,
+                    body=body,
+                    is_imported_rss_feed_post=True,
+                    imported_rss_feed=imported_feed,
+                    timestamp=post_timestamp  # Use the extracted timestamp
+                )
 
     return redirect('current_user_feed')
 

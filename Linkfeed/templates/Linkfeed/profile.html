@@ -16,7 +16,7 @@
             margin-left: 10px;
         }
 
-        .like-svg:hover, .comment-svg:hover, .delete-btn:hover {
+        .like-svg:hover, .comment-svg:hover, .share-svg:hover, .delete-btn:hover {
             cursor: pointer;
             transform: scale(1.1);
         }
@@ -106,10 +106,13 @@
                     {{ post.timestamp }}
                 </div>
                 <div class="col post-actions d-flex justify-content-end align-items-end">
-
-                    {% comment %} <img src="{% static 'Linkfeed/reshare.svg' %}" width="32" height="32" fill="black" viewBox="0 0 32 32">
-                    <span>0</span> {% endcomment %}
-                    <!-- Form for like/unlike -->
+                    <form id="shareForm{{ post.id }}" action="{% url 'repost' post.pk %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                        <!-- Hidden input field to hold the post id -->
+                    </form>
+                    <img src="{% static 'Linkfeed/reshare.svg' %}" alt="repost" class="share-svg" width="32" height="32" fill="black" viewBox="0 0 32 32" onclick="rePostPost('{{ post.id }}')">
+                    <span>{{post.repost_count}}</span>
                     <form id="likeForm{{ post.id }}" action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
                         {% csrf_token %}
                         <input type="hidden" name="post_id" value="{{ post.id }}">
@@ -142,6 +145,7 @@
             </div>
         </div>
         {% endfor %}
+        
     </div>
 </div>
 
@@ -270,6 +274,10 @@
     document.getElementById('delete-img').addEventListener('mouseout', function() {
         this.src = "{% static 'Linkfeed/delete.svg' %}";
     });
+    function rePostPost(postId) {
+        // Submit the form with corresponding post id
+        document.getElementById('shareForm' + postId).submit();
+    }
     
 </script>
 
