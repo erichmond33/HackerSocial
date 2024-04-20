@@ -96,3 +96,10 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+class UserCSS(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    link = models.URLField()  # Store the CSS content directly
+
+    def __str__(self):
+        return f"Custom CSS Style for {self.user.username}"
