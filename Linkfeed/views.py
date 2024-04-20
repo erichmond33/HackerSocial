@@ -20,18 +20,22 @@ from django.db.models import Q
 from datetime import datetime
 import pytz
 import time 
+from Linkfeed.decorators import prevent_iframe_embedding
+from django.views.decorators.http import require_GET
 
+from .decorators import CSPDecorator  # Import your decorator
 
 
 def index(request):
     if request.user.is_authenticated:
-        return redirect('profile', username=request.user.username)
+        return render(request, "Linkfeed/index.html")
     else:
         return redirect('login')
     
 def landing(request):
     return render(request, "Linkfeed/index.html")
 
+@CSPDecorator
 def current_user_profile(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse("login"))
@@ -50,6 +54,7 @@ def current_user_profile(request):
 
 from django.db.models import Count
 
+@CSPDecorator
 def profile(request, username):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse("login"))
@@ -67,21 +72,14 @@ def profile(request, username):
                 
             return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile})
 
-
-from django.shortcuts import render, redirect
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q, Count
-from .models import Post, Profile, ImportedRSSFeed  # Assuming your models are in the same app
-
+@CSPDecorator
 @login_required
 def current_user_feed(request):
     try:
         # Retrieve the profile associated with the current user
         profile = Profile.objects.get(user=request.user)
-
         # Retrieve the IDs of Linkfeed that the current user is following
         following_ids = profile.following.values_list('id', flat=True)
-
         # Retrieve posts from the Linkfeed that the current user is following
         posts = Post.objects.filter(
             Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
@@ -93,29 +91,13 @@ def current_user_feed(request):
         for post in posts:
             post.liked = post.likes.filter(id=request.user.id).exists()
 
-        # Pagination setup
-        paginator = Paginator(posts, 20)  # 20 posts per page
-        page = request.GET.get('page', 1)
-
-        try:
-            posts = paginator.page(page)
-        except PageNotAnInteger:
-            posts = paginator.page(1)  # Deliver first page
-        except EmptyPage:
-            posts = paginator.page(paginator.num_pages)  # Deliver last page
-
-        return render(request, 'Linkfeed/feed.html', {
-            'posts': posts, 
-            'imported_feeds': imported_rss_feeds, 
-            'profile': profile
-        })
-
+        return render(request, 'Linkfeed/feed.html', {'posts': posts, 'imported_feeds': imported_rss_feeds, 'profile': profile})
     except Profile.DoesNotExist:
-        return redirect('login')  
-
+        # Handle the case where the user doesn't have a profile
+        return redirect('login')  # Redirect to login page or handle as appropriate
     
     
-     
+@CSPDecorator     
 def feed(request, username):
     # Retrieve the user object based on the username
     user = User.objects.get(username=username)
@@ -149,7 +131,7 @@ def feed(request, username):
 
 
 
-
+@prevent_iframe_embedding
 def login_view(request):
     if request.method == "POST":
         username = request.POST["username"]
@@ -174,6 +156,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+@prevent_iframe_embedding
 def register(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -210,7 +194,7 @@ def register(request):
         return render(request, "Linkfeed/register.html")
 
 
-        
+@prevent_iframe_embedding        
 def logout_view(request):
     logout(request)
     return render(request, "Linkfeed/login.html", {
@@ -218,7 +202,7 @@ def logout_view(request):
     })
 
 
-
+@CSPDecorator
 def post(request, post_id):
     if not request.user.is_authenticated:
         #if not return to login page
@@ -236,7 +220,7 @@ def post(request, post_id):
         except Http404:
             return HttpResponse("404 - Post Not Found", status=404)
         
-
+@CSPDecorator
 def add_comment(request, post_id):
     if request.method == "POST":
         post = get_object_or_404(Post, id=post_id)
@@ -254,7 +238,7 @@ def add_comment(request, post_id):
 
 from django.shortcuts import redirect
 from django.contrib import messages
-
+@CSPDecorator
 def delete_comment(request, comment_id):
     if request.method == "POST":  # Change to POST method
         comment = get_object_or_404(Comment, id=comment_id)
@@ -277,7 +261,7 @@ def delete_comment(request, comment_id):
 
 
 
-
+@CSPDecorator
 def delete_post(request, post_id):
     if request.method == "POST":
         post = get_object_or_404(Post, id=post_id)
@@ -289,7 +273,7 @@ def delete_post(request, post_id):
         else:
             # Handle unauthorized deletion
             return HttpResponseForbidden("You are not authorized to delete this post.")
-
+@CSPDecorator
 def edit_post(request, post_id):
     if request.method == "POST":
         post = get_object_or_404(Post, id=post_id)
@@ -306,7 +290,7 @@ def edit_post(request, post_id):
             return HttpResponseForbidden("You are not authorized to edit this post.")
     # Handle other HTTP methods if necessary
 
-
+@CSPDecorator
 @login_required
 def edit_profile(request):
     if request.method == "POST":
@@ -327,7 +311,7 @@ def edit_profile(request):
     else:
         # Handle GET request (display edit profile form)
         return HttpResponseForbidden("You are not authorized to edit this profile.")
-
+@CSPDecorator
 def create_post(request):
     if request.method == "POST":
         title = request.POST.get('title')
@@ -341,7 +325,7 @@ def create_post(request):
         return render(request, "Linkfeed/create_post.html")
     
 
-
+@CSPDecorator
 @login_required
 def like_view(request, pk):
     # Assuming your Post model and like logic remains the same
@@ -362,7 +346,7 @@ def like_view(request, pk):
     return HttpResponseRedirect(redirect_url)
 
 
-
+@CSPDecorator
 @login_required
 def followers_view(request, username):
     # Get the profile of the user whose followers you want to see
@@ -371,7 +355,7 @@ def followers_view(request, username):
     followers = user_profile.follower.all()
     return render(request, 'Linkfeed/followers.html', {'followers': followers})
 
-
+@CSPDecorator
 @login_required
 def following_view(request, username):
     # Get the profile of the user whose following you want to see
@@ -380,7 +364,7 @@ def following_view(request, username):
     following = user_profile.following.all()
     return render(request, 'Linkfeed/following.html', {'following': following})
 
-
+@CSPDecorator
 @login_required
 def follow_view(request, username):
     if not request.user.is_authenticated:
@@ -406,7 +390,7 @@ def follow_view(request, username):
 
         # Redirect to the profile of the user being followed or unfollowed
         return HttpResponseRedirect(reverse('profile', args=[username]))
-    
+@CSPDecorator    
 @login_required
 def follow_or_unfollow(request, username):
     # Retrieve the profile of the user to follow
@@ -451,7 +435,7 @@ def parse_timestamp(timestamp_str):
                     continue
     return None
 
-
+@CSPDecorator
 def mirror_rss_feed(request):
     form = RSSFeedForm(request.POST or None)
     user = request.user
@@ -502,7 +486,7 @@ def mirror_rss_feed(request):
 
 
 
-
+@CSPDecorator
 def imported_rss_feed(request):
     form = ImportedRSSFeedForm(request.POST or None)
     user = request.user
@@ -567,7 +551,7 @@ def imported_rss_feed(request):
 
 
 
-
+@CSPDecorator
 def delete_imported_feed(request, feed_id):
     imported_rss_feed = get_object_or_404(ImportedRSSFeed, id=feed_id, user=request.user)
     # Delete posts associated with the imported RSS feed
@@ -576,7 +560,7 @@ def delete_imported_feed(request, feed_id):
     imported_rss_feed.delete()
     return redirect('current_user_feed')
 
-
+@CSPDecorator
 def refresh_mirrored_rss_feed(request):
     user = request.user
     rss_feed = RSSFeed.objects.filter(user=user).first()
@@ -603,7 +587,7 @@ def refresh_mirrored_rss_feed(request):
 
     return redirect('profile')
 
-
+@CSPDecorator
 def refresh_imported_rss_feed(request):
     user = request.user
     imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
@@ -641,7 +625,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 
 import datetime
-
+@CSPDecorator
 def repost_view(request, post_id):
     original_post = get_object_or_404(Post, pk=post_id)
 
