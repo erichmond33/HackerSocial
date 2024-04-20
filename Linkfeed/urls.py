@@ -32,6 +32,8 @@ urlpatterns = [
     path('refresh-imported-rss-feed/', views.refresh_imported_rss_feed, name='refresh_imported_rss_feed'),
     path("edit_profile/", views.edit_profile, name="edit_profile"),
     path("repost/<int:post_id>/", views.repost_view, name="repost"),
+    path('upload_css/', views.upload_css, name='upload_css'),
+    path('search-users/', views.search_users, name='search_users'),
 
 ]
          

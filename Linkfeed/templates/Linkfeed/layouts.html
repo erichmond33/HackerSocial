@@ -7,7 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'Linkfeed/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'Linkfeed/customcss.js' %}">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="{% static 'Linkfeed/customcss.js' %}"></script>
     <!-- <link href="{% static 'Linkfeed/bootstrap-grid.css' %}" rel="stylesheet"> -->
     <title>Document</title>
     {% block styles %}
@@ -37,9 +39,9 @@
                     <a href="{% url 'profile' profile.user.username %}">{{ profile.user.username }}</a>
                 </h1>
                 {% else %}
-                    <h1 id="username-header" class="header">
-                        <a href="{% url 'landing' %}">Linkfeed</a>
-                    </h1>
+                <h1 id="username-header" class="header">
+                    <a href="{% url 'landing' %}">Linkfeed</a>
+                </h1>
                 {% endif %}
             </div>
             <div class="col-3 d-flex justify-content-end align-items-center">

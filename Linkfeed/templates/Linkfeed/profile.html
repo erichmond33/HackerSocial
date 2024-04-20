@@ -20,11 +20,6 @@
             cursor: pointer;
             transform: scale(1.1);
         }
-
-             
-    
-
-        
     </style>
 {% endblock %}
 
@@ -34,6 +29,8 @@
 <a href="{% url 'followers' user.username %}">Followers</a>
 <a id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="">Mirror RSS Feed</a>
 <a href="{% url 'refresh_mirrored_rss_feed' %}" class="">Refresh RSS Feed</a>
+<a id="upload-css-link-btn" onclick="uploadCSSPopup()" class="">Upload CSS</a>
+<a id="search-btn" onclick="uploadSearchPopup()" class="">Search</a>
 {% if profile.user.username == user.username %}
 <a href="#" class="edit-profile-link" onclick="toggleEditProfilePopup()">Edit Profile</a>
 {% endif %}
@@ -198,12 +195,147 @@
     </div>
 </div>
 <!-- End Mirror RSS Feed Modal -->
+<!-- Upload CSS Modal -->
+<div id="uploadCSSPopup" class="modal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload CSS</h5>
+                <button type="button" class="close" onclick="uploadCSSPopup()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadCSS" method="post" action="{% url 'upload_css' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="cssFeedLink">CSS Feed Link:</label>
+                        <input type="url" class="form-control" id="cssFeedLink" name="link" placeholder="Enter CSS Link">
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="applyCustomCSS()">Apply CSS</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End CSS Modal -->
 
-
+<!-- Search Popup -->
+<div id="uploadSearchPopup" class="modal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Search</h5>
+                <button type="button" class="close" onclick="toggleUploadSearchPopup()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="searchProfileForm" method="post" action="{% url 'search_users' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="search-user">Search User:</label>
+                        <input type="text" class="form-control" id="search-user" placeholder="Type to search users">
+                    </div>
+                    <ul id="filtered-user-list" style="list-style: none; padding: 0;"></ul>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Search Popup-->
 <script>
+    document.getElementById('search-user').addEventListener('input', function() {
+        var query = this.value;
+        if (query.length > 0) {
+            fetchFilteredUsers(query);
+        } else {
+            document.getElementById('filtered-user-list').innerHTML = '';
+        }
+    });
+
+    function fetchFilteredUsers(query) {
+        fetch('search-users/?query=' + query)
+        .then(response => response.json())
+        .then(data => {
+            var filteredUserList = document.getElementById('filtered-user-list');
+            filteredUserList.innerHTML = '';
+            data.users.forEach(function(username) {
+                var li = document.createElement('li');
+                li.textContent = username;
+                filteredUserList.appendChild(li);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function toggleUploadSearchPopup() {
+        var popup = document.getElementById('uploadSearchPopup');
+        if (popup.style.display === 'none') {
+            popup.style.display = 'block';
+        } else {
+            popup.style.display = 'none';
+        }
+    }
+
+    // Function to handle clicks on user profiles in the search results
+    function redirectToUserProfile(userId) {
+        // Construct the URL of the user's profile page using the user ID
+        var userProfileUrl = "/Linkfeed/profile/" + username; // Replace "/profiles/" with the actual URL of your profile page
+
+        // Redirect the user to the profile page
+        window.location.href = userProfileUrl;
+    }
+
+document.addEventListener("DOMContentLoaded", function() {
+    // Add event listener to the filtered user list
+    var filteredUserList = document.getElementById("filtered-user-list");
+    filteredUserList.addEventListener("click", function(event) {
+        // Check if the clicked element is a list item
+        if (event.target.tagName === "LI") {
+            // Extract the username from the clicked list item
+            var username = event.target.textContent; // Get the username directly from the clicked list item
+
+            // Redirect the user to the profile page
+            redirectToUserProfile(username);
+        }
+    });
+});
+
+// Function to handle clicks on user profiles in the search results
+function redirectToUserProfile(username) {
+    // Construct the URL of the user's profile page using the username
+    var userProfileUrl = "/Linkfeed/profile/" + username; // Replace "/profiles/" with the actual URL of your profile page
+
+    // Redirect the user to the profile page
+    window.location.href = userProfileUrl;
+}
+
+</script>
+<script>
+    function uploadCSSPopup() {
+        var popup = document.getElementById("uploadCSSPopup");
+        popup.style.display = popup.style.display === "none" ? "block" : "none";
+    }
     function toggleCreatePostPopup() {
         var popup = document.getElementById("createPostPopup");
         popup.style.display = popup.style.display === "none" ? "block" : "none";
+    }
+        function applyCustomCSS() {
+        var customCSSLink = document.getElementById("cssFeedLink").value;
+        var head = document.head || document.getElementsByTagName('head')[0];
+        var existingCSSLink = document.getElementById("customCSS");
+    
+        if (existingCSSLink) {
+            existingCSSLink.href = customCSSLink;
+        } else {
+            var cssLink = document.createElement('link');
+            cssLink.rel = 'stylesheet';
+            cssLink.type = 'text/css';
+            cssLink.href = customCSSLink;
+            cssLink.id = "customCSS";
+            head.appendChild(cssLink);
+        }
     }
 
     function toggleMirrorRSSFeedPopup() {
@@ -211,6 +343,10 @@
         popup.style.display = popup.style.display === "none" ? "block" : "none";
     }
 
+    function uploadSearchPopup() {
+        var popup = document.getElementById("uploadSearchPopup");
+        popup.style.display = popup.style.display === "none" ? "block" : "none";
+    }
     function toggleEditProfilePopup() {
         var popup = document.getElementById("editProfilePopup");
         popup.style.display = popup.style.display === "none" ? "block" : "none";
@@ -274,11 +410,11 @@
     document.getElementById('delete-img').addEventListener('mouseout', function() {
         this.src = "{% static 'Linkfeed/delete.svg' %}";
     });
+
     function rePostPost(postId) {
         // Submit the form with corresponding post id
         document.getElementById('shareForm' + postId).submit();
     }
-    
 </script>
 
-{% endblock body %}
+{% endblock %}
