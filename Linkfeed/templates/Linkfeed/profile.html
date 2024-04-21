@@ -31,6 +31,7 @@
 <a href="{% url 'refresh_mirrored_rss_feed' %}" class="">Refresh RSS Feed</a>
 <a id="upload-css-link-btn" onclick="uploadCSSPopup()" class="">Upload CSS</a>
 <a id="search-btn" onclick="uploadSearchPopup()" class="">Search</a>
+<a href="{% url 'index' %}">test</a>
 {% if profile.user.username == user.username %}
 <a href="#" class="edit-profile-link" onclick="toggleEditProfilePopup()">Edit Profile</a>
 {% endif %}
@@ -38,7 +39,7 @@
 
 {% block body %}
 
-<a href="{{profile.link}}">{{profile.link}}</a>
+<a href="{{domain.domain}}">{{domain.domain}}</a>
 <div class="row my-4 d-flex justify-content-center align-items-center">
     <div class="col text-center aliing-items-center mx-5">
         <a id="followers-link" style="cursor: pointer;">Followers: {{ profile.follower.count }}</a>
