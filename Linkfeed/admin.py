@@ -1,7 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User, Post, Profile, Comment, PostLike, RSSFeed, ImportedRSSFeed
+
+from .models import User, Post, Profile, Comment, PostLike, RSSFeed, ImportedRSSFeed, UserCSS, AllowedDomain
+
+
+
 
 # Register your models here.
 
@@ -19,4 +23,9 @@ admin.site.register(Comment)
 admin.site.register(PostLike)
 admin.site.register(RSSFeed)
 admin.site.register(ImportedRSSFeed)
+
+admin.site.register(UserCSS)
+
+admin.site.register(AllowedDomain)
+
 

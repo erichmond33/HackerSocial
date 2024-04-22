@@ -16,7 +16,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 AUTH_USER_MODEL='Linkfeed.User'
-X_FRAME_OPTIONS = 'ALLOWALL'
+# X_FRAME_OPTIONS = 'ALLOWALL'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -28,16 +28,17 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 LOGIN_URL = '/Linkfeed/index/'
-
+# ALLOW_IFRAMING_WITHOUT_REFERER = False # Disallow if Referer is mi
+EXPLICIT_TRUSTED_DOMAIN = 'http://127.0.0.1:8000'  # Replace with your desired domain
 
 # CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000"]
 # # SESSION_COOKIE_SECURE = False
 # SESSION_COOKIE_SECURE = False
 
 
-# SESSION_COOKIE_SAMESITE = 'None'
-# CSRF_COOKIE_SAMESITE = 'None'
-# CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
 # SECURE_SSL_REDIRECT = False
 
 # CSP_DEFAULT_SRC = ("'self'", "http://127.0.0.1:8000")
@@ -57,8 +58,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
+# from Linkfeed.decorators import prevent_iframe_embedding 
 
 MIDDLEWARE = [
+   
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
