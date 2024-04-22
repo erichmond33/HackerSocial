@@ -1,0 +1,52 @@
+The problem with static personal websites are they don't have the social features the web offers: sharing, liking, commenting, following.
+The problem with social media is they want to keep you locked in to their platform and abuse.
+
+Linkfeed allows you all of the social media features on your static personal website.
+
+The way it works is your post an <iframe src="https://linkfeed.io/feed/yourusername"></iframe> on your personal website at /feed. This will display your Linkfeed on your personal website.
+Also, you can post an <iframe src="https://linkfeed.io/profile/yourusername"></iframe> on your personal website at /profile. This will display your profile on your personal website.
+
+
+What are the benifits?
+- Social media on your personal website
+- Custom CSS
+- Mirror/follow RSS feeds
+
+What are the pain points?
+- Social media is exploitive
+- 
+
+- Social proof
+
+
+
+
+Social network features on your personal website
+Social media meets personal websites
+
+- The link-focused posts encourge more depth, exploration, connection, and ownership.
+- Bring comments, likes, reshares, and follows to your static site
+- Break away from social media abuse
+- Custom CSS and RSS mirrorring/following
+- Super simple setup
+
+
+
+
+
+
+- Promote deeper engagement with your content, not just quick reactions.
+
+
+A new social media protocol standard
+- /feed 890-= /profile
+
+
+
+For the links by the emojis, do cards after the how it works sections.
+A pic of the comments, likes, and reshares svgs
+A pic of the same image at the top excpet with custom CSS. Maybe blue Links or something.
+A pic of the RSS modal
+
+
+After cards, put a whole registration form.

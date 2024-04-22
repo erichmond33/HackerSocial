@@ -1,0 +1,1 @@
+from .templatetags import url_filters

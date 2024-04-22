@@ -39,6 +39,7 @@ EXPLICIT_TRUSTED_DOMAIN = 'http://127.0.0.1:8000'  # Replace with your desired d
 SESSION_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SECURE = True
+
 # SECURE_SSL_REDIRECT = False
 
 # CSP_DEFAULT_SRC = ("'self'", "http://127.0.0.1:8000")
