@@ -1,0 +1,15 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\Django",
+    "\\Django\\__pycache__",
+    "\\Lib",
+    "\\Linkfeed",
+    "\\Linkfeed\\migrations",
+    "\\Linkfeed\\migrations\\__pycache__",
+    "\\Linkfeed\\static",
+    "\\Linkfeed\\__pycache__"
+  ],
+  "SelectedNode": "\\Linkfeed\\views.py",
+  "PreviewInSolutionExplorer": false
+}

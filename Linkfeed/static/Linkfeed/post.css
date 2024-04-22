@@ -1,0 +1,37 @@
+.main-comment {
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    /* Gray border */
+    border-radius: 5px;
+    /* Rounded corners */
+    padding: 10px;
+    /* Padding around the comment */
+}
+
+.nested-reply {
+    margin-left: 20px;
+    border: 1px solid #ccc;
+    /* Gray border */
+    border-radius: 5px;
+    /* Rounded corners */
+    padding: 10px;
+    /* Padding around the comment */
+}
+
+.main-comment-body {
+    border: 1px solid #ccc;
+    /* Gray border */
+    border-radius: 5px;
+    /* Rounded corners */
+    padding: 10px;
+    /* Padding around the comment */
+}
+
+.nested-reply-body {
+    border: 1px solid #ccc;
+    /* Gray border */
+    border-radius: 5px;
+    /* Rounded corners */
+    padding: 10px;
+    /* Padding around the comment */
+}

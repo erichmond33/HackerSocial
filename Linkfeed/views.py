@@ -1,41 +1,49 @@
 from sqlite3 import IntegrityError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseRedirect, HttpResponse,HttpResponseForbidden, JsonResponse, HttpResponseBadRequest
-
 from django.urls import reverse
-
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-
-from .models import User, Post, Profile, Comment, PostLike
-
+from .models import User, Post, Profile, Comment, PostLike, AllowedDomain
+from django.shortcuts import render, redirect
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Q, Count
+from .models import Post, Profile, ImportedRSSFeed  # Assuming your models are in the same app
 from django.http import Http404
-from .forms import RSSFeedForm 
-from .models import RSSFeed
+from .forms import RSSFeedForm, UserCSSForm 
+from .models import RSSFeed, UserCSS
 import feedparser
 from .forms import ImportedRSSFeedForm
 from .models import ImportedRSSFeed
-
+import datetime
+import dateutil.parser 
 from django.db.models import Q
 from datetime import datetime
 import pytz
 import time 
 from django.db.models import Count
+from Linkfeed.decorators import prevent_iframe_embedding
+from django.views.decorators.http import require_GET
+
+from .decorators import CSPDecorator  # Import your decorator
 
 
 def index(request):
     if request.user.is_authenticated:
-        return redirect('profile', username=request.user.username)
+        return render(request, "Linkfeed/index.html")
     else:
         return redirect('login')
     
 def landing(request):
-    return render(request, "Linkfeed/index.html")
+    return render(request, "Linkfeed/landingpage.html")
 
 @login_required
+@CSPDecorator
 def current_user_profile(request):
     return profile(request, request.user.username)
 
+
+@CSPDecorator
 def profile(request, username):
     user = User.objects.get(username=username)
     posts = Post.objects.filter(user=user)
@@ -58,6 +66,7 @@ def profile(request, username):
 
     return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "following": following})
 
+@CSPDecorator
 @login_required
 def current_user_feed(request):
     return feed(request, request.user.username)    
@@ -92,7 +101,7 @@ def feed(request, username):
 
 
 
-
+@prevent_iframe_embedding
 def login_view(request):
     if request.method == "POST":
         username = request.POST["username"]
@@ -117,6 +126,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+@prevent_iframe_embedding
 def register(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -150,7 +161,11 @@ def register(request):
             user = User.objects.create_user(username, email, password)
 
             # Create a Profile instance with the link
-            profile = Profile.objects.create(user=user, link=link, display_name=display_name)
+            profile = Profile.objects.create(user=user, display_name=display_name)
+            
+            # Create the allowed domain
+            allowed_domain = AllowedDomain(user=user, domain=link)
+            allowed_domain.save()
 
             # Log in the user
             login(request, user)
@@ -172,7 +187,7 @@ def register(request):
         return render(request, "Linkfeed/register.html")
 
 
-        
+@prevent_iframe_embedding        
 def logout_view(request):
     logout(request)
     return render(request, "Linkfeed/login.html", {
@@ -180,7 +195,7 @@ def logout_view(request):
     })
 
 
-
+@CSPDecorator
 def post(request, post_id):
     if not request.user.is_authenticated:
         #if not return to login page
@@ -198,7 +213,7 @@ def post(request, post_id):
         except Http404:
             return HttpResponse("404 - Post Not Found", status=404)
         
-
+@CSPDecorator
 def add_comment(request, post_id):
     if request.method == "POST":
         post = get_object_or_404(Post, id=post_id)
@@ -216,7 +231,7 @@ def add_comment(request, post_id):
 
 from django.shortcuts import redirect
 from django.contrib import messages
-
+@CSPDecorator
 def delete_comment(request, comment_id):
     if request.method == "POST":  # Change to POST method
         comment = get_object_or_404(Comment, id=comment_id)
@@ -239,7 +254,7 @@ def delete_comment(request, comment_id):
 
 
 
-
+@CSPDecorator
 def delete_post(request, post_id):
     if request.method == "POST":
         post = get_object_or_404(Post, id=post_id)
@@ -251,7 +266,7 @@ def delete_post(request, post_id):
         else:
             # Handle unauthorized deletion
             return HttpResponseForbidden("You are not authorized to delete this post.")
-
+@CSPDecorator
 def edit_post(request, post_id):
     if request.method == "POST":
         post = get_object_or_404(Post, id=post_id)
@@ -268,8 +283,8 @@ def edit_post(request, post_id):
             return HttpResponseForbidden("You are not authorized to edit this post.")
     # Handle other HTTP methods if necessary
 
-
-@login_required
+@CSPDecorator
+@login_required  # Ensure the user is logged in 
 def edit_profile(request):
     if request.method == "POST":
         # Get the current user's profile instance
@@ -278,8 +293,9 @@ def edit_profile(request):
         # Update the link
         new_link = request.POST.get('link')
         if new_link:
-            profile.link = new_link
-            profile.save()
+            allowed_domain = AllowedDomain.objects.get(user=request.user)
+            allowed_domain.domain = new_link
+            allowed_domain.save()
 
         # Update the display_name
         new_display_name = request.POST.get('display_name')
@@ -303,25 +319,27 @@ def edit_profile(request):
                 request.user.save()
 
         # Redirect to the profile page after editing
-        return redirect('profile')
+        return redirect('profile') 
     else:
         # Handle GET request (display edit profile form)
         return HttpResponseForbidden("You are not authorized to edit this profile.")
 
+
+@CSPDecorator
 def create_post(request):
     if request.method == "POST":
         title = request.POST.get('title')
         body = request.POST.get('body')
         # Create a new post
         new_post = Post.objects.create(user=request.user, title=title, body=body)
-        
+
         # Redirect to the profile page after creating the post
         return HttpResponseRedirect(reverse("profile"))
     else:
         return render(request, "Linkfeed/create_post.html")
     
 
-
+@CSPDecorator
 @login_required
 def like_view(request, pk):
     # Assuming your Post model and like logic remains the same
@@ -342,7 +360,7 @@ def like_view(request, pk):
     return HttpResponseRedirect(redirect_url)
 
 
-
+@CSPDecorator
 @login_required
 def followers_view(request, username):
     # Get the profile of the user whose followers you want to see
@@ -351,7 +369,7 @@ def followers_view(request, username):
     followers = user_profile.follower.all()
     return render(request, 'Linkfeed/followers.html', {'followers': followers})
 
-
+@CSPDecorator
 @login_required
 def following_view(request, username):
     # Get the profile of the user whose following you want to see
@@ -360,7 +378,7 @@ def following_view(request, username):
     following = user_profile.following.all()
     return render(request, 'Linkfeed/following.html', {'following': following})
 
-
+@CSPDecorator
 @login_required
 def follow_view(request, username):
     if not request.user.is_authenticated:
@@ -386,7 +404,7 @@ def follow_view(request, username):
 
         # Redirect to the profile of the user being followed or unfollowed
         return HttpResponseRedirect(reverse('profile', args=[username]))
-    
+@CSPDecorator    
 @login_required
 def follow_or_unfollow(request, username):
     # Retrieve the profile of the user to follow
@@ -409,10 +427,6 @@ def follow_or_unfollow(request, username):
 
 
 
-
-import datetime
-import dateutil.parser 
-
 def parse_timestamp(timestamp_str):
     formats = [
         '%Y-%m-%dT%H:%M:%S%z',  # Original format
@@ -431,7 +445,7 @@ def parse_timestamp(timestamp_str):
                     continue
     return None
 
-
+@CSPDecorator
 def mirror_rss_feed(request):
     form = RSSFeedForm(request.POST or None)
     user = request.user
@@ -482,7 +496,7 @@ def mirror_rss_feed(request):
 
 
 
-
+@CSPDecorator
 def imported_rss_feed(request):
     form = ImportedRSSFeedForm(request.POST or None)
     user = request.user
@@ -547,7 +561,7 @@ def imported_rss_feed(request):
 
 
 
-
+@CSPDecorator
 def delete_imported_feed(request, feed_id):
     imported_rss_feed = get_object_or_404(ImportedRSSFeed, id=feed_id, user=request.user)
     # Delete posts associated with the imported RSS feed
@@ -556,7 +570,7 @@ def delete_imported_feed(request, feed_id):
     imported_rss_feed.delete()
     return redirect('current_user_feed')
 
-
+@CSPDecorator
 def refresh_mirrored_rss_feed(request):
     user = request.user
     rss_feed = RSSFeed.objects.filter(user=user).first()
@@ -580,17 +594,15 @@ def refresh_mirrored_rss_feed(request):
                     is_rss_feed_post=True,
                     timestamp=post_timestamp  # Use the extracted timestamp
                 )
-
     return redirect('profile')
 
-
+@CSPDecorator
 def refresh_imported_rss_feed(request):
     user = request.user
     imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
 
     for imported_feed in imported_rss_feeds:
         feed = feedparser.parse(imported_feed.link)
-
         for entry in reversed(feed.entries):  # Use reversed to get newest posts first
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')
@@ -608,7 +620,6 @@ def refresh_imported_rss_feed(request):
                     imported_rss_feed=imported_feed,
                     timestamp=post_timestamp  # Use the extracted timestamp
                 )
-
     return redirect('current_user_feed')
 
 
@@ -616,6 +627,13 @@ def landing(request):
     return render(request, 'Linkfeed/landingpage.html')
 
 
+
+
+from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse
+
+import datetime
+@CSPDecorator
 def repost_view(request, post_id):
     original_post = get_object_or_404(Post, pk=post_id)
 
@@ -644,3 +662,34 @@ def repost_view(request, post_id):
 
     # Redirect back to the previous page
     return redirect(request.META.get('HTTP_REFERER', reverse('current_user_profile')))
+
+def search_users(request):
+    if request.method == 'GET':
+        query = request.GET.get('query', '')
+        users = User.objects.filter(username__icontains=query)
+        user_list = [user.username for user in users]
+        return JsonResponse({'users': user_list})
+    else:
+        query = request.GET.get('query', '')
+        users = User.objects.filter(username__icontains=query)
+        user_list = [user.username for user in users]
+        return render(request, 'profile.html', {'users': user_list})
+
+
+def upload_css(request):
+    # Assuming you have a UserCSS model and each user can have their custom CSS link
+    # You might need to adjust this logic based on your actual implementation
+    if request.user.is_authenticated:
+        try:
+            user_css = UserCSS.objects.get(user=request.user)
+            custom_css_link = user_css.link
+        except UserCSS.DoesNotExist:
+            # If the user doesn't have a custom CSS link, you can return a default one
+            custom_css_link = "default_css_link.css"
+        
+        # Construct JSON response
+        data = {'link': custom_css_link}
+        return JsonResponse(data)
+    else:
+        # If the user is not authenticated, return an error message or handle it as needed
+        return JsonResponse({'error': 'User not authenticated'}, status=401)
