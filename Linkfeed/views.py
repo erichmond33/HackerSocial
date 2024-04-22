@@ -29,7 +29,7 @@ from .decorators import CSPDecorator  # Import your decorator
 
 def index(request):
     if request.user.is_authenticated:
-        return redirect('landing')
+        return render(request, "Linkfeed/landingpage.html")
     else:
         return redirect('login')
     
@@ -43,7 +43,7 @@ def current_user_profile(request):
     else:
         allowed_domain = AllowedDomain.objects.filter(user=request.user).first()  # Get the first domain
         try:
-            posts = Post.objects.filter(user=request.user, is_rss_feed_post=True).order_by('-timestamp')
+            posts = Post.objects.filter(user=request.user, is_imported_rss_feed_post=False).order_by('-timestamp')
 
             profile = get_object_or_404(Profile, user=request.user)
             # Check if the current user has liked each post
@@ -70,7 +70,7 @@ def profile(request, username):
         if profile_user == request.user:
             return redirect('current_user_profile')
         else:
-            posts = Post.objects.filter(user=profile_user, is_rss_feed_post=True).annotate(total_comments=Count('comments')).order_by('-timestamp')
+            posts = Post.objects.filter(user=profile_user, is_imported_rss_feed_post=False).annotate(total_comments=Count('comments')).order_by('-timestamp')
 
             profile = get_object_or_404(Profile, user=profile_user)
             # Check if the current user has liked each post
@@ -505,17 +505,16 @@ def mirror_rss_feed(request):
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')  # You can change this to get other fields like summary
             for prefix, uri in feed.namespaces.items():
-                print(f"Prefix: {prefix}")
-                print(f"URI: {uri}")
-                print("----------")  # Separator
+             
                 if prefix == "dc":
-                    print ('dlkafjasfjldsfjlskafjldsakfjdsakfjlsda')
+                 
                     date = entry.get('date', 'Nodate')
-                    print(date)
+             
                     post_timestamp = parse_timestamp(date)
-                    print('hello')
-                    print(post_timestamp)
-                    print('fill')
+           
+                  
+                  
+              
                     # Check if a post with the same title and timestamp already exists
                     if title not in existing_titles or not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
                         new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True, timestamp=post_timestamp)
@@ -534,8 +533,8 @@ def mirror_rss_feed(request):
                     'dc:created': entry.get('dc:created')
                 }
                 post_timestamp = parse_timestamp(timestamp_str)
-                print('hey')
-                print(post_timestamp)
+          
+          
                 if post_timestamp is None:
                     post_timestamp = datetime.datetime.now()
                 
