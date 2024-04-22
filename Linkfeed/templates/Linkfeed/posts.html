@@ -8,7 +8,7 @@
                     {% if post.is_imported_rss_feed_post %}
                         <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small truncate-text" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">RSS Feed ({{ post.imported_rss_feed.link|slice:"8:" }})</span></p>
                     {% elif not post.is_rss_feed_post or post.is_rss_feed_post %} <!-- the latter means it is a mirrored rss post -->
-                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small truncate-text" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ post.user.profile.display_name }} ({{ post.user.profile.link|slice:"8:" }})</span></p>
+                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small truncate-text" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ post.user.profile.display_name }} ({{ post.user.alloweddomain.domain|slice:"8:" }})</span></p>
                     {% endif %}
                 </div>
                 <div class="col-1 text-right">

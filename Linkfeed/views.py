@@ -30,7 +30,7 @@ from .decorators import CSPDecorator  # Import your decorator
 
 def index(request):
     if request.user.is_authenticated:
-        return render(request, "Linkfeed/index.html")
+        return render(request, "Linkfeed/landingpage.html")
     else:
         return redirect('login')
     
@@ -48,6 +48,9 @@ def profile(request, username):
     user = User.objects.get(username=username)
     posts = Post.objects.filter(user=user)
     profile = Profile.objects.get(user=user)
+    domain = AllowedDomain.objects.get(user=user)
+    
+    profile.link = domain.domain
 
     # Check if we are following them
     following = False
