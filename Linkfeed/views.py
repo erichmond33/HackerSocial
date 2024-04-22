@@ -48,7 +48,13 @@ def profile(request, username):
             following = True
 
     # Order posts reverse chronologically
-    posts = posts.order_by("-timestamp").all()
+    posts = Post.objects.filter(
+        Q(user=request.user) & Q(is_imported_rss_feed_post=False)
+    ).annotate(total_comments=Count('comments')).order_by('-timestamp')
+
+    # Check if the user has liked each post
+    for post in posts:
+        post.liked = post.likes.filter(id=user.id).exists()
 
     return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "following": following})
 

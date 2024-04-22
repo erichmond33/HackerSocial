@@ -12,7 +12,7 @@
                     {% endif %}
                 </div>
                 <div class="col-1 text-right">
-                    {% if post.is_imported_rss_feed_post %}
+                    {% if post.is_imported_rss_feed_post or post.is_rss_feed_post %} <!-- the latter means it is a mirrored rss post -->
                         <img src="{% static 'Linkfeed/rss.svg' %}" alt="repost" class="svg" width="32" height="32" fill="black" viewBox="0 0 32 32" onclick="rePostPost('{{ post.id }}')">
                     {% elif not post.is_rss_feed_post %}
                         <img src="{% static 'Linkfeed/link.svg' %}" style="float: right;" alt="repost" class="svg" width="32" height="32" fill="black" viewBox="0 0 32 32" onclick="rePostPost('{{ post.id }}')">
