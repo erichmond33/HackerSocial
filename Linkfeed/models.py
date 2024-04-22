@@ -86,7 +86,7 @@ class Profile(models.Model):
     following = models.ManyToManyField(User, blank=True, related_name="following_user")
 
     def __str__(self):
-        return f"{self.user.username} : Followers = {self.follower.count()} : {self.link} : Following = {self.following.count()}"
+        return f"{self.user.username} : Followers = {self.follower.count()} : Following = {self.following.count()}"
 
 # @receiver(post_save, sender=User)
 # def create_user_profile(sender, instance, created, **kwargs):

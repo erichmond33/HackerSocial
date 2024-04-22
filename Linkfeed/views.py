@@ -21,7 +21,6 @@ from django.db.models import Q
 from datetime import datetime
 import pytz
 import time 
-from django.db.models import Count
 from Linkfeed.decorators import prevent_iframe_embedding
 from django.views.decorators.http import require_GET
 
@@ -30,63 +29,96 @@ from .decorators import CSPDecorator  # Import your decorator
 
 def index(request):
     if request.user.is_authenticated:
-        return render(request, "Linkfeed/landingpage.html")
+        return redirect('landing')
     else:
         return redirect('login')
     
 def landing(request):
-    return render(request, "Linkfeed/landingpage.html")
+    return render(request, "Linkfeed/index.html")
 
-@login_required
 @CSPDecorator
 def current_user_profile(request):
-    return profile(request, request.user.username)
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("login"))
+    else:
+        allowed_domain = AllowedDomain.objects.filter(user=request.user).first()  # Get the first domain
+        try:
+            posts = Post.objects.filter(user=request.user, is_rss_feed_post=True).order_by('-timestamp')
 
+            profile = get_object_or_404(Profile, user=request.user)
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
+
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "domain": allowed_domain})
+        except Http404:
+            # Handle the case where RSSFeed object does not exist for the user
+            
+            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "domain": allowed_domain})
+
+from django.db.models import Count
 
 @CSPDecorator
 def profile(request, username):
-    user = User.objects.get(username=username)
-    posts = Post.objects.filter(user=user)
-    profile = Profile.objects.get(user=user)
-    domain = AllowedDomain.objects.get(user=user)
     
-    profile.link = domain.domain
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("login"))
+    else:
+        
+        profile_user = get_object_or_404(User, username=username)
+        # Check if the requested profile is the profile of the logged-in user
+        if profile_user == request.user:
+            return redirect('current_user_profile')
+        else:
+            posts = Post.objects.filter(user=profile_user, is_rss_feed_post=True).annotate(total_comments=Count('comments')).order_by('-timestamp')
 
-    # Check if we are following them
-    following = False
-    if request.user.is_authenticated:
-        if request.user in profile.follower.all():
-            following = True
-
-    # Order posts reverse chronologically
-    posts = Post.objects.filter(
-        Q(user=request.user) & Q(is_imported_rss_feed_post=False)
-    ).annotate(total_comments=Count('comments')).order_by('-timestamp')
-
-    # Check if the user has liked each post
-    for post in posts:
-        post.liked = post.likes.filter(id=user.id).exists()
-
-    return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "following": following})
+            profile = get_object_or_404(Profile, user=profile_user)
+            # Check if the current user has liked each post
+            for post in posts:
+                post.liked = post.likes.filter(id=request.user.id).exists()
+            allowed_domain = AllowedDomain.objects.filter(user=profile_user).first()  # Get the first domain
+            return render(request, "Linkfeed/other_profile.html", {"posts": posts, "profile": profile, "domain": allowed_domain})
 
 @CSPDecorator
 @login_required
 def current_user_feed(request):
-    return feed(request, request.user.username)    
+    try:
+        # Retrieve the profile associated with the current user
+        profile = Profile.objects.get(user=request.user)
+        # Retrieve the IDs of Linkfeed that the current user is following
+        following_ids = profile.following.values_list('id', flat=True)
+        # Retrieve posts from the Linkfeed that the current user is following
+        posts = Post.objects.filter(
+            Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
+        ).annotate(total_comments=Count('comments')).order_by('-timestamp')
 
-     
+        imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
+
+        # Check if the current user has liked each post
+        for post in posts:
+            post.liked = post.likes.filter(id=request.user.id).exists()
+
+        return render(request, 'Linkfeed/feed.html', {'posts': posts, 'imported_feeds': imported_rss_feeds, 'profile': profile})
+    except Profile.DoesNotExist:
+        # Handle the case where the user doesn't have a profile
+        return redirect('login')  # Redirect to login page or handle as appropriate
+    
+    
+@CSPDecorator     
 def feed(request, username):
     # Retrieve the user object based on the username
     user = User.objects.get(username=username)
     profile = Profile.objects.get(user=user)
 
     # Retrieve the IDs of Linkfeed that the user is following
-    following_ids = profile.following.all().values_list('id', flat=True)
+    following_ids = user.profile.following.values_list('id', flat=True)
 
     # Retrieve posts from the Linkfeed that the user is following and not imported RSS feed posts
     posts = Post.objects.filter(
-        Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
+        Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True)
     ).annotate(total_comments=Count('comments')).order_by('-timestamp')
+
+    imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
 
     # Check if the user has liked each post
     for post in posts:
@@ -94,12 +126,14 @@ def feed(request, username):
 
     context = {
         'posts': posts,
-        'profile': profile,
+        'imported_feeds': imported_rss_feeds,
+        'user': user,
+        'profile': profile,  # Add profile to the context
     }
     # Check if the current user has liked each post
     for post in posts:
         post.liked = post.likes.filter(id=request.user.id).exists()
-    return render(request, 'Linkfeed/feed.html', context)
+    return render(request, 'Linkfeed/other_feed.html', context)
 
 
 
@@ -133,11 +167,8 @@ logger = logging.getLogger(__name__)
 @prevent_iframe_embedding
 def register(request):
     if request.method == "POST":
+        website = request.POST.get("website")
         username = request.POST.get("username")
-        display_name = username
-        link = request.POST.get("link")
-        stripped_link = link.split('//')[-1].split('/')[0] # Stripped link
-        username = stripped_link
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirmation = request.POST.get("confirmation")
@@ -149,29 +180,12 @@ def register(request):
             })
 
         try:
-            username_taken = True
-            while username_taken:
-                try:
-                    user = User.objects.get(username=username)
-                    if user:
-                        # Increment username i.e. username1, username2, username3
-                        username = f"{stripped_link}{int(username[-1]) + 1 if username[-1].isdigit() else 1}"
-
-                except User.DoesNotExist:
-                    username_taken = False
-
             # Attempt to create new user
             user = User.objects.create_user(username, email, password)
-
-            # Create a Profile instance with the link
-            profile = Profile.objects.create(user=user, display_name=display_name)
-            
-            # Create the allowed domain
-            allowed_domain = AllowedDomain(user=user, domain=link)
-            allowed_domain.save()
-
             # Log in the user
             login(request, user)
+            allowed_domain = AllowedDomain(user=user, domain=website)
+            allowed_domain.save()
             return HttpResponseRedirect(reverse("index"))
         except IntegrityError as e:
             if 'unique constraint' in str(e).lower() and 'username' in str(e).lower():
@@ -290,36 +304,19 @@ def edit_post(request, post_id):
 @login_required  # Ensure the user is logged in 
 def edit_profile(request):
     if request.method == "POST":
-        # Get the current user's profile instance
-        profile = get_object_or_404(Profile, user=request.user)
-
-        # Update the link
+        # Retrieve the new link from the POST data
         new_link = request.POST.get('link')
-        if new_link:
+
+        # Try to fetch the relevant AllowedDomain object 
+        try:
             allowed_domain = AllowedDomain.objects.get(user=request.user)
             allowed_domain.domain = new_link
             allowed_domain.save()
 
-        # Update the display_name
-        new_display_name = request.POST.get('display_name')
-        if new_display_name:
-            profile.display_name = new_display_name
-            profile.save()
+        except AllowedDomain.DoesNotExist:
+            new_allowed_domain = AllowedDomain(user=request.user, domain=new_link)
+            new_allowed_domain.save()
 
-        # Update the username
-        new_username = request.POST.get('username')
-        if new_username:
-            # Check if the new username is already taken
-            if User.objects.filter(username=new_username).exclude(pk=request.user.pk).exists():
-                # Handle the case where the username is already taken
-                # You can display an error message or take any other appropriate action
-                error_message = "The username is already taken. Please choose a different one."
-                # Pass the error message to the template context
-                context = {'error_message': error_message}
-                return HttpResponseBadRequest("The username is already taken. Please choose a different one.")
-            else:
-                request.user.username = new_username
-                request.user.save()
 
         # Redirect to the profile page after editing
         return redirect('profile') 
@@ -430,23 +427,49 @@ def follow_or_unfollow(request, username):
 
 
 
+import datetime
+import dateutil.parser
+
 def parse_timestamp(timestamp_str):
     formats = [
         '%Y-%m-%dT%H:%M:%S%z',  # Original format
-        '%a, %d %b %Y %H:%M:%S %Z'  # pubDate format
+        '%a, %d %b %Y %H:%M:%S %Z',  # pubDate format
+        '%Y-%m-%d'  # Added for parsing only dates
     ]
-    for field_name in ['published', 'pubDate', 'dc:date', 'atom:published', 'dc:created']:
-        timestamp = timestamp_str.get(field_name)
-        if timestamp:
-            for fmt in formats:
-                try:
-                    if fmt == '%Y-%m-%dT%H:%M:%S%z':
-                        return datetime.datetime.strptime(timestamp, fmt)
-                    else:
-                        return dateutil.parser.parse(timestamp) 
-                except ValueError:
-                    continue
-    return None
+
+    if isinstance(timestamp_str, str):
+        # Direct Parsing Attempt for strings:
+        for fmt in formats:
+            try:
+                # Attempt to parse as datetime first 
+                if fmt == '%Y-%m-%dT%H:%M:%S%z':
+                    return datetime.datetime.strptime(timestamp_str, fmt)
+                elif fmt == '%Y-%m-%d':
+                    return datetime.datetime.strptime(timestamp_str, fmt).date()
+                else:
+                    return dateutil.parser.parse(timestamp_str) 
+            except ValueError:
+                continue  # Try other formats
+
+    elif isinstance(timestamp_str, dict):
+        # Iterate over potential field names (if direct parsing failed)
+        for field_name in ['published', 'pubDate', 'dc:date', 'atom:published', 'dc:created']:
+            timestamp = timestamp_str.get(field_name)
+            if timestamp:
+                for fmt in formats:
+                    try:
+                        # Attempt to parse as datetime first 
+                        if fmt == '%Y-%m-%dT%H:%M:%S%z':
+                            return datetime.datetime.strptime(timestamp, fmt)
+                        elif fmt == '%Y-%m-%d':
+                            return datetime.datetime.strptime(timestamp, fmt).date()
+                        else:
+                            return dateutil.parser.parse(timestamp) 
+                    except ValueError:
+                        continue  # Try other formats
+
+    return None  # Parsing unsuccessful
+
 
 @CSPDecorator
 def mirror_rss_feed(request):
@@ -472,26 +495,55 @@ def mirror_rss_feed(request):
 
         feed = feedparser.parse(rss_feed.link)
         entries = feed.entries
+
+        # feed = feedparser.parse(rss_feed_url)
+
+     
         
         for entry in reversed(entries):
+            post_timestamp = None
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')  # You can change this to get other fields like summary
-            # Extract timestamp from the entry
-            timestamp_str = {
-                'published': entry.get('published'),
-                'pubDate': entry.get('pubDate'),
-                'dc:date': entry.get('dc:date'),
-                'atom:published': entry.get('atom:published'),
-                'dc:created': entry.get('dc:created')
-            }
-            post_timestamp = parse_timestamp(timestamp_str)
-            if post_timestamp is None:
-                post_timestamp = datetime.datetime.now()
-            
-            # Check if a post with the same title and timestamp already exists
-            if title not in existing_titles or not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
-                new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True, timestamp=post_timestamp)
-                existing_titles.add(title)  # Add title to existing titles set
+            for prefix, uri in feed.namespaces.items():
+                print(f"Prefix: {prefix}")
+                print(f"URI: {uri}")
+                print("----------")  # Separator
+                if prefix == "dc":
+                    print ('dlkafjasfjldsfjlskafjldsakfjdsakfjlsda')
+                    date = entry.get('date', 'Nodate')
+                    print(date)
+                    post_timestamp = parse_timestamp(date)
+                    print('hello')
+                    print(post_timestamp)
+                    print('fill')
+                    # Check if a post with the same title and timestamp already exists
+                    if title not in existing_titles or not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
+                        new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True, timestamp=post_timestamp)
+                        existing_titles.add(title)  # Add title to existing titles set
+                    # Set flag indicating the condition is met
+                    condition_met = True
+                    break  # No need to continue iteration if condition is met
+            else:
+                # Condition was not met, so execute the else statement
+                # Extract timestamp from the entry
+                timestamp_str = {
+                    'published': entry.get('published'),
+                    'pubDate': entry.get('pubDate'),
+                    'dc:date': entry.get('dc:date'),
+                    'atom:published': entry.get('atom:published'),
+                    'dc:created': entry.get('dc:created')
+                }
+                post_timestamp = parse_timestamp(timestamp_str)
+                print('hey')
+                print(post_timestamp)
+                if post_timestamp is None:
+                    post_timestamp = datetime.datetime.now()
+                
+                # Check if a post with the same title and timestamp already exists
+                if title not in existing_titles or not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
+                    new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True, timestamp=post_timestamp)
+                    existing_titles.add(title)  # Add title to existing titles set
+
     else:
         entries = []  # Handle case where RSS feed is not available
 
@@ -499,11 +551,12 @@ def mirror_rss_feed(request):
 
 
 
+
 @CSPDecorator
 def imported_rss_feed(request):
     form = ImportedRSSFeedForm(request.POST or None)
     user = request.user
-
+    existing_titles = set(Post.objects.filter(user=user, is_imported_rss_feed_post=True).values_list('title', flat=True))
     if request.method == 'POST':
         if form.is_valid():
             rss_feed_link = form.cleaned_data['link']
@@ -515,14 +568,26 @@ def imported_rss_feed(request):
                 for entry in reversed(entries):
                     title = entry.get('title', 'No Title')
                     body = entry.get('link', 'No Link')
-                    published_time = entry.get('published')
-                    updated_time = entry.get('updated')
-                    timestamp_str = {'published': published_time, 'updated': updated_time}
-                    post_timestamp = parse_timestamp(timestamp_str)
+                    post_timestamp = None
+                    for prefix, uri in feed.namespaces.items():
+                        if prefix == "dc":
+                            date = entry.get('date', 'Nodate')
+                            post_timestamp = parse_timestamp(date)
+                            break
+                    
                     if post_timestamp is None:
-                        post_timestamp = datetime.datetime.now()  # Use current time if timestamp not found
-                    # Check if a post with the same title already exists
-                    if not Post.objects.filter(user=user, title=title).exists():
+                        timestamp_str = {
+                            'published': entry.get('published'),
+                            'pubDate': entry.get('pubDate'),
+                            'dc:date': entry.get('dc:date'),
+                            'atom:published': entry.get('atom:published'),
+                            'dc:created': entry.get('dc:created')
+                        }
+                        post_timestamp = parse_timestamp(timestamp_str)
+                        if post_timestamp is None:
+                            post_timestamp = datetime.datetime.now()
+
+                    if not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
                         new_post = Post.objects.create(
                             user=user,
                             title=title,
@@ -531,7 +596,6 @@ def imported_rss_feed(request):
                             imported_rss_feed=new_imported_feed,
                             timestamp=post_timestamp
                         )
-            # refresh_imported_rss_feed(request)
             return HttpResponseRedirect(request.path_info)
 
     user_imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
@@ -541,14 +605,26 @@ def imported_rss_feed(request):
         for entry in reversed(entries):
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')
-            published_time = entry.get('published')
-            updated_time = entry.get('updated')
-            timestamp_str = {'published': published_time, 'updated': updated_time}
-            post_timestamp = parse_timestamp(timestamp_str)
+            post_timestamp = None
+            for prefix, uri in feed.namespaces.items():
+                if prefix == "dc":
+                    date = entry.get('date', 'Nodate')
+                    post_timestamp = parse_timestamp(date)
+                    break
+            
             if post_timestamp is None:
-                post_timestamp = datetime.datetime.now()  # Use current time if timestamp not found
-            # Check if a post with the same title already exists
-            if not Post.objects.filter(user=user, title=title).exists():
+                timestamp_str = {
+                    'published': entry.get('published'),
+                    'pubDate': entry.get('pubDate'),
+                    'dc:date': entry.get('dc:date'),
+                    'atom:published': entry.get('atom:published'),
+                    'dc:created': entry.get('dc:created')
+                }
+                post_timestamp = parse_timestamp(timestamp_str)
+                if post_timestamp is None:
+                    post_timestamp = datetime.datetime.now()
+
+            if not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
                 new_post = Post.objects.create(
                     user=user,
                     title=title,
@@ -557,10 +633,8 @@ def imported_rss_feed(request):
                     imported_rss_feed=imported_feed,
                     timestamp=post_timestamp
                 )
-    # refresh_imported_rss_feed(request)
+
     return redirect('current_user_feed')
-
-
 
 
 
@@ -626,8 +700,7 @@ def refresh_imported_rss_feed(request):
     return redirect('current_user_feed')
 
 
-def landing(request):
-    return render(request, 'Linkfeed/landingpage.html')
+
 
 
 
@@ -665,6 +738,7 @@ def repost_view(request, post_id):
 
     # Redirect back to the previous page
     return redirect(request.META.get('HTTP_REFERER', reverse('current_user_profile')))
+
 
 def search_users(request):
     if request.method == 'GET':
