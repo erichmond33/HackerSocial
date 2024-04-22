@@ -5,8 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{% static 'Linkfeed/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">    <link href="{% static 'Linkfeed/style.css' %}" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <!-- <link href="{% static 'Linkfeed/bootstrap-grid.css' %}" rel="stylesheet"> -->
     <title>Document</title>
@@ -38,22 +37,18 @@
 
     <div class="container-fluid px-3">
             <div class="row">
-                <div class="col-9">
+                <div class="col-10">
+                    <h1 id="username-header" class="header truncate-text">
                     {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' %}
-                    <h1 id="username-header" class="header">
                         <a href="{% url 'feed' profile.user.username %}">{{ profile.display_name }}</a>
-                    </h1>
                     {% elif request.resolver_match.url_name == 'current_user_feed' or request.resolver_match.url_name == 'feed' %}
-                    <h1 id="username-header" class="header">
                         <a href="{% url 'profile' profile.user.username %}">{{ profile.display_name }}</a>
-                    </h1>
                     {% else %}
-                        <h1 id="username-header" class="header">
-                            <a href="{% url 'landing' %}">Linkfeed</a>
-                        </h1>
+                        <a href="{% url 'landing' %}">Linkfeed</a>
                     {% endif %}
+                    </h1>
                 </div>
-                <div class="col-3 d-flex justify-content-end align-items-center">
+                <div class="col-2 d-flex justify-content-end align-items-center">
                     <!-- <button class="open-btn" id="open-btn" onclick="openNav()"><img src="{% static 'Linkfeed/burger.svg' %}" alt="menu" width="32" height="32"></button> -->
                     <button class="open-btn" id="open-btn" onclick="openNav()"><h1 id="nav-header" class="header">¬</h1></button>
                 </div>
@@ -115,6 +110,41 @@
             background-color: #f1f1f1;
         }
     </style>
+
+    <div id="redirect-popup" class="modal modal-open" style="display: none;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">You aren't logged in</h5>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <p>For saftey, login or register at our domain.</p>
+                        <button type="button" class="normal-font-button btn red-button"
+                            onclick="window.top.location.href = window.location.href;">Redirect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if we are in an iframe
+            if (window.self !== window.top) {
+                // Check if the page includes "/login" or "/register"
+                if (window.location.href.includes('/login') || window.location.href.includes('/register')) {
+                    // Show the popup
+                    document.getElementById('redirect-popup').style.display = 'block';
+                    // Blur the background
+                    var c = document.querySelectorAll('.container-fluid')
+                    c.forEach(function (container) {
+                        container.style.filter = 'blur(4px)';
+                    });
+                }
+            }
+        });
+    </script>
 
     {% block body %}
     {% endblock %}

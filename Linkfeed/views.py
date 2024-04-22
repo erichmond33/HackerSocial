@@ -20,7 +20,7 @@ from django.db.models import Q
 from datetime import datetime
 import pytz
 import time 
-
+from django.db.models import Count
 
 
 def index(request):
@@ -32,23 +32,9 @@ def index(request):
 def landing(request):
     return render(request, "Linkfeed/index.html")
 
+@login_required
 def current_user_profile(request):
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse("login"))
-    else:
-        try:
-            posts = Post.objects.filter(user=request.user).order_by('-timestamp')
-            profile = get_object_or_404(Profile, user=request.user)
-            # Check if the current user has liked each post
-            for post in posts:
-                post.liked = post.likes.filter(id=request.user.id).exists()
-
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
-        except Http404:
-            # Handle the case where RSSFeed object does not exist for the user
-            return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile})
-
-from django.db.models import Count
+    return profile(request, request.user.username)
 
 def profile(request, username):
     user = User.objects.get(username=username)
@@ -62,51 +48,13 @@ def profile(request, username):
             following = True
 
     # Order posts reverse chronologically
-    posts = posts.order_by("timestamp").all()
+    posts = posts.order_by("-timestamp").all()
 
     return render(request, "Linkfeed/profile.html", {"posts": posts, "profile": profile, "following": following})
 
 @login_required
 def current_user_feed(request):
-    try:
-        # Retrieve the profile associated with the current user
-        profile = Profile.objects.get(user=request.user)
-
-        # Retrieve the IDs of Linkfeed that the current user is following
-        following_ids = profile.following.values_list('id', flat=True)
-
-        # Retrieve posts from the Linkfeed that the current user is following
-        posts = Post.objects.filter(
-            Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
-        ).annotate(total_comments=Count('comments')).order_by('-timestamp')
-
-        imported_rss_feeds = ImportedRSSFeed.objects.filter(user=request.user)
-
-        # Check if the current user has liked each post
-        for post in posts:
-            post.liked = post.likes.filter(id=request.user.id).exists()
-
-        # Pagination setup
-        paginator = Paginator(posts, 20)  # 20 posts per page
-        page = request.GET.get('page', 1)
-
-        try:
-            posts = paginator.page(page)
-        except PageNotAnInteger:
-            posts = paginator.page(1)  # Deliver first page
-        except EmptyPage:
-            posts = paginator.page(paginator.num_pages)  # Deliver last page
-
-        return render(request, 'Linkfeed/feed.html', {
-            'posts': posts, 
-            'imported_feeds': imported_rss_feeds, 
-            'profile': profile
-        })
-
-    except Profile.DoesNotExist:
-        return redirect('login')  
-
-    
+    return feed(request, request.user.username)    
 
      
 def feed(request, username):
@@ -115,14 +63,12 @@ def feed(request, username):
     profile = Profile.objects.get(user=user)
 
     # Retrieve the IDs of Linkfeed that the user is following
-    following_ids = user.profile.following.values_list('id', flat=True)
+    following_ids = profile.following.all().values_list('id', flat=True)
 
     # Retrieve posts from the Linkfeed that the user is following and not imported RSS feed posts
     posts = Post.objects.filter(
-        Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True)
+        Q(user=request.user) | (Q(user__id__in=following_ids) & ~Q(is_imported_rss_feed_post=True))
     ).annotate(total_comments=Count('comments')).order_by('-timestamp')
-
-    imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
 
     # Check if the user has liked each post
     for post in posts:
@@ -130,7 +76,6 @@ def feed(request, username):
 
     context = {
         'posts': posts,
-        'user': user,
         'profile': profile,
     }
     # Check if the current user has liked each post
@@ -171,6 +116,8 @@ def register(request):
         username = request.POST.get("username")
         display_name = username
         link = request.POST.get("link")
+        stripped_link = link.split('//')[-1].split('/')[0] # Stripped link
+        username = stripped_link
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirmation = request.POST.get("confirmation")
@@ -188,7 +135,7 @@ def register(request):
                     user = User.objects.get(username=username)
                     if user:
                         # Increment username i.e. username1, username2, username3
-                        username = f"{display_name}{int(username[-1]) + 1 if username[-1].isdigit() else 1}"
+                        username = f"{stripped_link}{int(username[-1]) + 1 if username[-1].isdigit() else 1}"
 
                 except User.DoesNotExist:
                     username_taken = False
@@ -321,16 +268,34 @@ def edit_profile(request):
     if request.method == "POST":
         # Get the current user's profile instance
         profile = get_object_or_404(Profile, user=request.user)
-        
-        # Retrieve the new link from the POST data
+
+        # Update the link
         new_link = request.POST.get('link')
-        
-        # Update the profile link with the new value
-        profile.link = new_link
-        
-        # Save the updated profile
-        profile.save()
-        
+        if new_link:
+            profile.link = new_link
+            profile.save()
+
+        # Update the display_name
+        new_display_name = request.POST.get('display_name')
+        if new_display_name:
+            profile.display_name = new_display_name
+            profile.save()
+
+        # Update the username
+        new_username = request.POST.get('username')
+        if new_username:
+            # Check if the new username is already taken
+            if User.objects.filter(username=new_username).exclude(pk=request.user.pk).exists():
+                # Handle the case where the username is already taken
+                # You can display an error message or take any other appropriate action
+                error_message = "The username is already taken. Please choose a different one."
+                # Pass the error message to the template context
+                context = {'error_message': error_message}
+                return HttpResponseBadRequest("The username is already taken. Please choose a different one.")
+            else:
+                request.user.username = new_username
+                request.user.save()
+
         # Redirect to the profile page after editing
         return redirect('profile')
     else:

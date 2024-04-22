@@ -58,7 +58,13 @@ ul {
 
 a {
 	color: #EA322E;
+	max-width: 100vw;
 }
+
+/* .row {
+	text-overflow: ellipsis;
+	overflow: hidden;
+} */
 
 a:visited {
 	color: #EA322E;
@@ -96,6 +102,10 @@ pre {
 	font-size: 20px;
 }
 
+.red-button:hover {
+	color: white;
+}
+
 .red-button a {
 	color: white;
 }
@@ -107,6 +117,10 @@ pre {
 
 .red-button:hover {
 	color:white;
+}
+
+.normal-font-button {
+	font-size: medium;
 }
 
 .header {
@@ -175,6 +189,14 @@ a.row-follow-button:hover {
 	text-decoration: none;
 }
 
+.truncate-text {
+	max-width: 100%;
+	display: inline-block; /* Create a new formatting context */
+	white-space: nowrap; /* Prevent the text from wrapping */
+	overflow: hidden; /* Hide the overflow */
+	text-overflow: ellipsis; /* Show an ellipsis (...) for the overflowing text */
+}
+
 .create-post {
 	border: 1px solid black;
 	border-radius: 25px;
@@ -208,6 +230,11 @@ a.row-follow-button:hover {
 #posts {
     width: 100%;
 	background-color: none;
+}
+
+.post-body, .post-title, .profile-link {
+	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 .wrapped-post-link {
@@ -275,8 +302,15 @@ a.row-follow-button:hover {
 	.vignette {
 		box-shadow: 0 0 200px rgba(0,0,0,0.15) inset;
 	}
+	#nav-header {
+		padding-left: 15px;
+		padding-right: 15px;
+		line-height: 50%;
+		padding-bottom: 11px;
+		background-color: #EA322E;
+	}
 	.header {
-		font-size:3em;
+		font-size:2em;
 	}
 	#row-follow {
 		font-size: 80%;
@@ -288,6 +322,9 @@ a.row-follow-button:hover {
 		width: 23px;
 	}
 	.post-stats {
+		font-size: 80%;
+	}
+	#profile-link {
 		font-size: 80%;
 	}
 }

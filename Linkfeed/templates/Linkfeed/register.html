@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block styles %}
-    <link rel="stylesheet" href="{% static 'Linkfeed/login.css' %}">
 {% endblock %}
 
 {% block body %}
@@ -31,7 +30,7 @@
                 <div class="form-group">
                     <input class="form-control" type="password" name="confirmation" placeholder="Confirm Password" required>
                 </div>
-                <input class="btn btn-primary" type="submit" value="Register">
+                <button class="normal-font-button btn red-button" type="submit" value="Register">Submit</button>
             </form>
             
             Already have an account? <a href="{% url 'login' %}">Log In here.</a>

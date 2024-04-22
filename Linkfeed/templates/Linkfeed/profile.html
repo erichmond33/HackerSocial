@@ -30,11 +30,9 @@
 
 {% block nav %}
 <a href="{% url 'current_user_feed' %}" class="">Feed</a>
-<a href="{% url 'following' user.username %}">Following</a>
-<a href="{% url 'followers' user.username %}">Followers</a>
-<a id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="">Mirror RSS Feed</a>
 <a href="{% url 'refresh_mirrored_rss_feed' %}" class="">Refresh RSS Feed</a>
 {% if profile.user.username == user.username %}
+<a id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="">Mirror RSS Feed</a>
 <a href="#" class="edit-profile-link" onclick="toggleEditProfilePopup()">Edit Profile</a>
 {% endif %}
 {% endblock %}
@@ -43,7 +41,7 @@
 <div class="container-fluid">   
     <div class="row">
             <div class="col-12">
-                <a class="" href="{{profile.link}}">{{profile.link}}</a>
+                <a class="truncate-text pl-1" id="profile-link" target="_blank" href="{{profile.link}}">{{profile.link}}</a>
             </div>
     </div>
     <div class="row my-4" id="row-follow">
@@ -129,10 +127,21 @@
                 <form id="editProfileForm" method="post" action="{% url 'edit_profile' %}">
                     {% csrf_token %}
                     <div class="form-group">
-                        <label for="profile-link">Profile Link:</label>
+                        <label for="profile-link">Profile Link</label>
+                        <small class="text-muted">({{ profile.link }})</small>
                         <input type="url" class="form-control" id="profile-link" name="link" placeholder="Enter your new profile link">
                     </div>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <div class="form-group">
+                        <label for="profile-link">Display Name</label>
+                        <small class="text-muted">({{ profile.display_name }})</small>
+                        <input type="text" class="form-control" id="display-name" name="display_name" placeholder="Enter your new display name">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-link">Username </label>
+                        <small class="text-muted">({{ profile.user.username }})</small>
+                        <input type="text" class="form-control" id="" name="username" placeholder="Enter your new username">
+                    </div>
+                    <button type="submit" class="normal-font-button red-button btn">Save</button>
                 </form>
             </div>
         </div>
@@ -157,7 +166,7 @@
                         <label for="rssFeedLink">RSS Feed Link:</label>
                         <input type="url" class="form-control" id="rssFeedLink" name="link" placeholder="Enter RSS Feed link">
                     </div>
-                    <button type="submit" class="btn btn-primary">Mirror</button>
+                    <button type="submit" class="normal-font-button red-button btn">Mirror</button>
                 </form>
             </div>
         </div>
