@@ -151,8 +151,7 @@
                             </button>
                         </form>
                         {% endif %}
-                            
-                                <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}"
+                            <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}"
                                     style="margin-left: 20px; display: none;">
                                     {% csrf_token %}
                                     <input type="hidden" name="parent_comment_id" value="{{ comment.id }}">
@@ -161,7 +160,7 @@
                                         <img src="{% static 'Linkfeed/send.svg' %}" width="32" height="32" fill="black"
                                             viewBox="0 0 32 32"><!-- Send icon -->
                                     </button>
-                                </form>
+                        </form>
                     </div>
                 </div>
             </div>
