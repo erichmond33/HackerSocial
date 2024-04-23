@@ -15,23 +15,16 @@
         .fixed-bottom .btn {
             margin-left: 10px;
         }
-
-        .like-svg:hover, .comment-svg:hover, .share-svg:hover, .delete-btn:hover {
-            cursor: pointer;
-            transform: scale(1.1);
-        }
     </style>
 {% endblock %}
 
 {% block nav %}
 <a href="{% url 'current_user_feed' %}" class="">Feed</a>
 <a href="{% url 'refresh_mirrored_rss_feed' %}" class="">Refresh RSS Feed</a>
-<a id="upload-css-link-btn" onclick="uploadCSSPopup()" class="">Upload CSS</a>
-<a id="search-btn" onclick="uploadSearchPopup()" class="">Search</a>
-<a href="{% url 'index' %}">test</a>
 {% if profile.user.username == user.username %}
 <a id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="">Mirror RSS Feed</a>
-<a href="#" class="edit-profile-link" onclick="toggleEditProfilePopup()">Edit Profile</a>
+<a id="upload-css-link-btn" onclick="uploadCSSPopup()" class="">Upload CSS</a>
+<a id="search-btn" onclick="uploadSearchPopup()" class="">Search</a>
 {% endif %}
 {% endblock %}
 

@@ -298,6 +298,11 @@ a.row-follow-button:hover {
 	color: #6c757d;
 }
 
+.like-svg:hover, .comment-svg:hover, .share-svg:hover, .delete-btn:hover, .delete-btn2:hover {
+	cursor: pointer;
+	transform: scale(1.1);
+}
+
 @media (max-width: 456px) {
 	.vignette {
 		box-shadow: 0 0 200px rgba(0,0,0,0.15) inset;

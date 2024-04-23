@@ -30,9 +30,9 @@ from .decorators import CSPDecorator  # Import your decorator
 
 def index(request):
     if request.user.is_authenticated:
-        return render(request, "Linkfeed/landingpage.html")
+        return redirect('profile', username=request.user.username)
     else:
-        return redirect('login')
+        return render(request, "Linkfeed/landingpage.html")
     
 def landing(request):
     return render(request, "Linkfeed/landingpage.html")
@@ -206,13 +206,15 @@ def post(request, post_id):
     else:
         try:
             stuff = get_object_or_404(Post, id=post_id)
+            # Get the profile of the user who created the post
+            profile = Profile.objects.get(user=stuff.user)
             total_likes = stuff.total_likes()
             liked = False
             if stuff.likes.filter(id=request.user.id).exists():
                 liked = True
             post = get_object_or_404(Post, id=post_id)
             comments = Comment.objects.filter(post=post)  # Fetch comments associated with the post
-            return render(request, "Linkfeed/post.html", {"post": post, "comments": comments, 'stuff': stuff, 'total_likes': total_likes, 'liked': liked})
+            return render(request, "Linkfeed/post.html", {"post": post, "comments": comments, 'stuff': stuff, 'total_likes': total_likes, 'liked': liked, 'profile': profile})
         except Http404:
             return HttpResponse("404 - Post Not Found", status=404)
         
@@ -236,7 +238,7 @@ from django.shortcuts import redirect
 from django.contrib import messages
 @CSPDecorator
 def delete_comment(request, comment_id):
-    if request.method == "POST":  # Change to POST method
+    if request.method == "POST" or request.method == "GET":
         comment = get_object_or_404(Comment, id=comment_id)
         # Check if the user is authenticated
         if request.user.is_authenticated:
