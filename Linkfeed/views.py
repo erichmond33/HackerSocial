@@ -432,23 +432,50 @@ def follow_or_unfollow(request, username):
 
 
 
+
+import datetime
+import dateutil.parser
+
 def parse_timestamp(timestamp_str):
     formats = [
         '%Y-%m-%dT%H:%M:%S%z',  # Original format
-        '%a, %d %b %Y %H:%M:%S %Z'  # pubDate format
+        '%a, %d %b %Y %H:%M:%S %Z',  # pubDate format
+        '%Y-%m-%d'  # Added for parsing only dates
     ]
-    for field_name in ['published', 'pubDate', 'dc:date', 'atom:published', 'dc:created']:
-        timestamp = timestamp_str.get(field_name)
-        if timestamp:
-            for fmt in formats:
-                try:
-                    if fmt == '%Y-%m-%dT%H:%M:%S%z':
-                        return datetime.datetime.strptime(timestamp, fmt)
-                    else:
-                        return dateutil.parser.parse(timestamp) 
-                except ValueError:
-                    continue
-    return None
+
+    if isinstance(timestamp_str, str):
+        # Direct Parsing Attempt for strings:
+        for fmt in formats:
+            try:
+                # Attempt to parse as datetime first 
+                if fmt == '%Y-%m-%dT%H:%M:%S%z':
+                    return datetime.datetime.strptime(timestamp_str, fmt)
+                elif fmt == '%Y-%m-%d':
+                    return datetime.datetime.strptime(timestamp_str, fmt).date()
+                else:
+                    return dateutil.parser.parse(timestamp_str) 
+            except ValueError:
+                continue  # Try other formats
+
+    elif isinstance(timestamp_str, dict):
+        # Iterate over potential field names (if direct parsing failed)
+        for field_name in ['published', 'pubDate', 'dc:date', 'atom:published', 'dc:created']:
+            timestamp = timestamp_str.get(field_name)
+            if timestamp:
+                for fmt in formats:
+                    try:
+                        # Attempt to parse as datetime first 
+                        if fmt == '%Y-%m-%dT%H:%M:%S%z':
+                            return datetime.datetime.strptime(timestamp, fmt)
+                        elif fmt == '%Y-%m-%d':
+                            return datetime.datetime.strptime(timestamp, fmt).date()
+                        else:
+                            return dateutil.parser.parse(timestamp) 
+                    except ValueError:
+                        continue  # Try other formats
+
+    return None  # Parsing unsuccessful
+
 
 @CSPDecorator
 def mirror_rss_feed(request):
@@ -474,8 +501,13 @@ def mirror_rss_feed(request):
 
         feed = feedparser.parse(rss_feed.link)
         entries = feed.entries
+
+        # feed = feedparser.parse(rss_feed_url)
+
+     
         
         for entry in reversed(entries):
+            post_timestamp = None
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')  # You can change this to get other fields like summary
             for prefix, uri in feed.namespaces.items():
@@ -524,11 +556,12 @@ def mirror_rss_feed(request):
 
 
 
+
 @CSPDecorator
 def imported_rss_feed(request):
     form = ImportedRSSFeedForm(request.POST or None)
     user = request.user
-
+    existing_titles = set(Post.objects.filter(user=user, is_imported_rss_feed_post=True).values_list('title', flat=True))
     if request.method == 'POST':
         if form.is_valid():
             rss_feed_link = form.cleaned_data['link']
@@ -540,14 +573,26 @@ def imported_rss_feed(request):
                 for entry in reversed(entries):
                     title = entry.get('title', 'No Title')
                     body = entry.get('link', 'No Link')
-                    published_time = entry.get('published')
-                    updated_time = entry.get('updated')
-                    timestamp_str = {'published': published_time, 'updated': updated_time}
-                    post_timestamp = parse_timestamp(timestamp_str)
+                    post_timestamp = None
+                    for prefix, uri in feed.namespaces.items():
+                        if prefix == "dc":
+                            date = entry.get('date', 'Nodate')
+                            post_timestamp = parse_timestamp(date)
+                            break
+                    
                     if post_timestamp is None:
-                        post_timestamp = datetime.datetime.now()  # Use current time if timestamp not found
-                    # Check if a post with the same title already exists
-                    if not Post.objects.filter(user=user, title=title).exists():
+                        timestamp_str = {
+                            'published': entry.get('published'),
+                            'pubDate': entry.get('pubDate'),
+                            'dc:date': entry.get('dc:date'),
+                            'atom:published': entry.get('atom:published'),
+                            'dc:created': entry.get('dc:created')
+                        }
+                        post_timestamp = parse_timestamp(timestamp_str)
+                        if post_timestamp is None:
+                            post_timestamp = datetime.datetime.now()
+
+                    if not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
                         new_post = Post.objects.create(
                             user=user,
                             title=title,
@@ -556,7 +601,6 @@ def imported_rss_feed(request):
                             imported_rss_feed=new_imported_feed,
                             timestamp=post_timestamp
                         )
-            # refresh_imported_rss_feed(request)
             return HttpResponseRedirect(request.path_info)
 
     user_imported_rss_feeds = ImportedRSSFeed.objects.filter(user=user)
@@ -566,14 +610,26 @@ def imported_rss_feed(request):
         for entry in reversed(entries):
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')
-            published_time = entry.get('published')
-            updated_time = entry.get('updated')
-            timestamp_str = {'published': published_time, 'updated': updated_time}
-            post_timestamp = parse_timestamp(timestamp_str)
+            post_timestamp = None
+            for prefix, uri in feed.namespaces.items():
+                if prefix == "dc":
+                    date = entry.get('date', 'Nodate')
+                    post_timestamp = parse_timestamp(date)
+                    break
+            
             if post_timestamp is None:
-                post_timestamp = datetime.datetime.now()  # Use current time if timestamp not found
-            # Check if a post with the same title already exists
-            if not Post.objects.filter(user=user, title=title).exists():
+                timestamp_str = {
+                    'published': entry.get('published'),
+                    'pubDate': entry.get('pubDate'),
+                    'dc:date': entry.get('dc:date'),
+                    'atom:published': entry.get('atom:published'),
+                    'dc:created': entry.get('dc:created')
+                }
+                post_timestamp = parse_timestamp(timestamp_str)
+                if post_timestamp is None:
+                    post_timestamp = datetime.datetime.now()
+
+            if not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
                 new_post = Post.objects.create(
                     user=user,
                     title=title,
@@ -582,7 +638,7 @@ def imported_rss_feed(request):
                     imported_rss_feed=imported_feed,
                     timestamp=post_timestamp
                 )
-    # refresh_imported_rss_feed(request)
+
     return redirect('current_user_feed')
 
 
