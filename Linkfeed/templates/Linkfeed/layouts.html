@@ -43,6 +43,8 @@
                         <a href="{% url 'feed' profile.user.username %}">{{ profile.display_name }}</a>
                     {% elif request.resolver_match.url_name == 'current_user_feed' or request.resolver_match.url_name == 'feed' %}
                         <a href="{% url 'profile' profile.user.username %}">{{ profile.display_name }}</a>
+                    {% elif request.resolver_match.url_name == 'post' %} 
+                        <a href="{% url 'profile' profile.user.username %}">{{ profile.display_name }}</a>
                     {% else %}
                         <a href="{% url 'landing' %}">Linkfeed</a>
                     {% endif %}
