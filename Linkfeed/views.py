@@ -478,22 +478,45 @@ def mirror_rss_feed(request):
         for entry in reversed(entries):
             title = entry.get('title', 'No Title')
             body = entry.get('link', 'No Link')  # You can change this to get other fields like summary
-            # Extract timestamp from the entry
-            timestamp_str = {
-                'published': entry.get('published'),
-                'pubDate': entry.get('pubDate'),
-                'dc:date': entry.get('dc:date'),
-                'atom:published': entry.get('atom:published'),
-                'dc:created': entry.get('dc:created')
-            }
-            post_timestamp = parse_timestamp(timestamp_str)
-            if post_timestamp is None:
-                post_timestamp = datetime.datetime.now()
-            
-            # Check if a post with the same title and timestamp already exists
-            if title not in existing_titles or not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
-                new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True, timestamp=post_timestamp)
-                existing_titles.add(title)  # Add title to existing titles set
+            for prefix, uri in feed.namespaces.items():
+             
+                if prefix == "dc":
+                 
+                    date = entry.get('date', 'Nodate')
+             
+                    post_timestamp = parse_timestamp(date)
+           
+                  
+                  
+              
+                    # Check if a post with the same title and timestamp already exists
+                    if title not in existing_titles or not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
+                        new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True, timestamp=post_timestamp)
+                        existing_titles.add(title)  # Add title to existing titles set
+                    # Set flag indicating the condition is met
+                    condition_met = True
+                    break  # No need to continue iteration if condition is met
+            else:
+                # Condition was not met, so execute the else statement
+                # Extract timestamp from the entry
+                timestamp_str = {
+                    'published': entry.get('published'),
+                    'pubDate': entry.get('pubDate'),
+                    'dc:date': entry.get('dc:date'),
+                    'atom:published': entry.get('atom:published'),
+                    'dc:created': entry.get('dc:created')
+                }
+                post_timestamp = parse_timestamp(timestamp_str)
+          
+          
+                if post_timestamp is None:
+                    post_timestamp = datetime.datetime.now()
+                
+                # Check if a post with the same title and timestamp already exists
+                if title not in existing_titles or not Post.objects.filter(user=user, title=title, timestamp=post_timestamp).exists():
+                    new_post = Post.objects.create(user=user, title=title, body=body, is_rss_feed_post=True, timestamp=post_timestamp)
+                    existing_titles.add(title)  # Add title to existing titles set
+
     else:
         entries = []  # Handle case where RSS feed is not available
 
