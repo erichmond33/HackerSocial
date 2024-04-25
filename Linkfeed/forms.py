@@ -9,7 +9,5 @@ class RSSFeedForm(forms.Form):
 class ImportedRSSFeedForm(forms.Form):
     link = forms.URLField(label='Imported RSS Feed Link')
 
-class UserCSSForm(forms.ModelForm):
-    class Meta:
-        model = UserCSS
-        fields = ['link']
+class UserCSSForm(forms.Form):
+    link = forms.URLField(label='Imported CSS Link')
