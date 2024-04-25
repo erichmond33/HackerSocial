@@ -81,20 +81,21 @@ class Comment(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    display_name = models.CharField(max_length=255, blank=True, null=True)
     follower = models.ManyToManyField(User, blank=True, related_name="follower_user")
     following = models.ManyToManyField(User, blank=True, related_name="following_user")
 
     def __str__(self):
         return f"{self.user.username} : Followers = {self.follower.count()} : {self.link} : Following = {self.following.count()}"
 
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
+# @receiver(post_save, sender=User)
+# def create_user_profile(sender, instance, created, **kwargs):
+#     if created:
+#         Profile.objects.create(user=instance)
 
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+# @receiver(post_save, sender=User)
+# def save_user_profile(sender, instance, **kwargs):
+#     instance.profile.save()
 
 
 class UserCSS(models.Model):
@@ -108,8 +109,8 @@ from django.db import models
 from django.contrib.auth import get_user_model  # Import the correct function
 
 class AllowedDomain(models.Model):
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)  # Use get_user_model()
-    domain = models.CharField(max_length=255, unique=True) 
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    domain = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.domain}"
