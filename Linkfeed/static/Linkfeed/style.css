@@ -19,8 +19,6 @@ html {
 body{
 	max-width:40em;
 	margin:0 auto;
-	padding-right:1em;
-	padding-left: 1em;
 	font-family: Space, sans-serif;
 	font-size:20px;
 	line-height:30px;
@@ -28,26 +26,74 @@ body{
 	color:#000;
 	font-weight: 300;
 	overflow-y:scroll;
+	overflow-x: hidden;
 }
-
-h1,h2,h3,h4,dt,small,.small,dl#tweetlist dt,footer,label,#commentlist ol li cite,div.blogparent,input[type="submit"]{
+.vignette {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: white;
+	box-shadow: 0 0 200px rgba(0,0,0,0.3) inset;
+	z-index: -1;
+}
+h1,h2,h3,h4,dt,dl#tweetlist dt,footer,label,#commentlist ol li cite,div.blogparent,input[type="submit"]{
 	font-family: Nexa;
 	font-weight:normal;
 	font-style:normal;
 	text-align:left;
 }
 
+ul {
+	list-style: none;
+	margin-left: 0;
+	padding-left: 0em;
+  }
+  
+  /* li {
+	padding-left: .7em;
+	text-indent: -.7em;
+  } */
 
 a {
 	color: #EA322E;
+	max-width: 100vw;
 }
+
+/* .row {
+	text-overflow: ellipsis;
+	overflow: hidden;
+} */
 
 a:visited {
 	color: #EA322E;
 }
 
 a:hover {
-	color: #EA322E;
+	color: #941100;
+}
+
+button:active {
+	background-color: #941100;
+	border-color: #941100;
+}
+
+button:hover {
+	background-color: #941100;
+	border-color: #941100;
+}
+
+pre {
+	font-size: 70%;
+	background-color: #1e1e1e;
+	color: white;
+	padding: 5px;
+	border-radius: .25rem;
+}
+
+#main-header {
+	width: fit-content;
 }
 
 .red-button {
@@ -56,18 +102,32 @@ a:hover {
 	font-size: 20px;
 }
 
+.red-button:hover {
+	color: white;
+}
+
 .red-button a {
 	color: white;
 }
 
 .red-button a:hover {
 	text-decoration: none;
+	color:white;
+}
+
+.red-button:hover {
+	color:white;
+}
+
+.normal-font-button {
+	font-size: medium;
 }
 
 .header {
 	font-family: Sabado, sans-serif;
     font-size: 3.5em;
-	padding-bottom: 10px;
+	padding-bottom: 15px;
+	padding-top: 5px;
 	margin-bottom: 0px;
 	margin-top: 10px;
 	line-height: 80%;
@@ -75,9 +135,15 @@ a:hover {
 }
 
 #nav-header {
-	border: 1px solid black;
-	padding-left: 12px;
-	padding-right: 12px;
+	/* border-left: 1px solid black;
+	border-right: 1px solid black; */
+	padding-left: 20px;
+	padding-right: 20px;
+	line-height: 50%;
+	background-color: #EA322E;
+}
+#nav-header:hover {
+	background-color: #941100;
 }
 
 #username-header a {
@@ -89,20 +155,46 @@ a:hover {
 }
 
 #open-btn {
-	color: #EA322E;
+	color: white;
+	padding-left: 0;
+	padding-right: 0;
 }
 
-a.follow-button {
+/* #row-follow {
+	font-size: 80%;
+} */
+
+a.row-follow-button.follow-button {
 	border: 1px solid #EA322E;
 	background-color: #EA322E;
-	border-radius: .25rem;
-	padding: 5px 20px 5px 20px;
-	color: white;
+	text-align: center;
 }
 
-.follow-button:hover {
-	color: black;
+a.row-follow-button {
+	border: 1px solid #6c757d;
+	background-color: #6c757d;
+	border-radius: .25rem;
+	padding: 5px 10px 5px 10px;
+	color: white;
+	line-height: normal;
+	height: calc(1.5em + .3rem + 2px);
+}
+
+a.follow-button:hover {
+	background-color: #941100;
+	border-color: #941100;
+}
+
+a.row-follow-button:hover {
 	text-decoration: none;
+}
+
+.truncate-text {
+	max-width: 100%;
+	display: inline-block; /* Create a new formatting context */
+	white-space: nowrap; /* Prevent the text from wrapping */
+	overflow: hidden; /* Hide the overflow */
+	text-overflow: ellipsis; /* Show an ellipsis (...) for the overflowing text */
 }
 
 .create-post {
@@ -111,23 +203,38 @@ a.follow-button {
 }
 
 #create-post-form {
-	width: 80%;
+	width: 100%;
 }
 
 #title-input {
 	font-size: 1.5rem;
+	height: calc(1.5em + .3rem + 2px);
+	line-height: 100%;
 }
 
 #body-input {
 	font-size: 20px;
+	height: calc(1.5em + .3rem + 2px);
+	line-height: 100%;
 }
 
 #create-post-button {
 	width: 100%;
+	height: calc(1.5em + .3rem + 2px);
+	line-height: 100%;
+}
+#create-post-button:hover {
+	color: white;
 }
 
 #posts {
     width: 100%;
+	background-color: none;
+}
+
+.post-body, .post-title, .profile-link {
+	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 .wrapped-post-link {
@@ -145,21 +252,86 @@ a.follow-button {
 	color: black;
 }
 
-.wrapped-post:hover {
-	background-color: #f1f1f1;
+.wrapped-profile-link:hover {
+	text-decoration: none;
 }
 
-.post {
-    border-bottom: 1px solid black;
+.wrapped-post:hover {
+	background-color: #f8f9fa;
 }
+
+.wrapped-profile:hover {
+	text-decoration: none;
+	background-color: #f8f9fa;
+}
+
+/* .post {
+    border-bottom: 1px solid #a1a1a1;
+} */
 
 .post-title {
     font-family: Nexa, sans-serif;
 }
 
+.post-user {
+	padding: 0;
+	margin: 0;
+}
+
 .post-body {
     z-index: 5;
 	color:#EA322E;
+}
+
+.post-stats {
+	color: #6c757d;
+	/* font-size: 80%; */
+	padding: 0 2.5px 0 2.5px;
+}
+
+.svg {
+	width: 28px;
+}
+
+#post-comment:hover {
+	text-decoration: none;
+	color: #6c757d;
+}
+
+.like-svg:hover, .comment-svg:hover, .share-svg:hover, .delete-btn:hover, .delete-btn2:hover {
+	cursor: pointer;
+	transform: scale(1.1);
+}
+
+@media (max-width: 456px) {
+	.vignette {
+		box-shadow: 0 0 200px rgba(0,0,0,0.15) inset;
+	}
+	#nav-header {
+		padding-left: 15px;
+		padding-right: 15px;
+		line-height: 50%;
+		padding-bottom: 11px;
+		background-color: #EA322E;
+	}
+	.header {
+		font-size:2em;
+	}
+	#row-follow {
+		font-size: 80%;
+	}
+	a.follow-button {
+		padding: 5px 6.5px 5px 6.5px;
+	}
+	.svg {
+		width: 23px;
+	}
+	.post-stats {
+		font-size: 80%;
+	}
+	#profile-link {
+		font-size: 80%;
+	}
 }
 
 

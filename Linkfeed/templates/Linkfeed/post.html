@@ -2,17 +2,15 @@
 {% load static %}
 
 {% block styles %}
-<link rel="stylesheet" href="{% static 'Linkfeed/post.css' %}">
 
 <style>
     .child-comment {
         margin-left: 40px;
         /* Adjust this value to your preference */
     }
-
-    .comment-body {
-        font-family: Arial, sans-serif;
-        /* Change font family for comments */
+    .comment-container {
+        border:none;
+        background-color: transparent;
     }
 </style>
 
@@ -22,50 +20,148 @@
 {% block nav %}
 <a href="{% url 'current_user_feed'%}" class="">Feed</a>
 <a href="{% url 'current_user_profile'%}" class="">Profile</a>
-<img src="{% static 'Linkfeed/send.svg' %}" width="32" height="32" fill="black" viewBox="0 0 32 32">
 {% endblock %}
+
 
 
 {% block body %}
 <!-- Move the "Posted by Lime" section outside the card and center it -->
-<div class="post-header text-center mb-3">
-    <h3>Posted by {{ post.user.username }}:</h3>
+<div id="posts" class="mt-5">
+    <div class="">
+        {% if post %}
+        {% include 'Linkfeed/posts.html' %}
+        {% endif %}
+    </div>
 </div>
-<div class="card post-container">
-    <div class="card-body">
-        <!-- Keep the title inside the card -->
-        <h2 class="post-title">
-            {% if post.title %}
-            {{ post.title }}
-            {% else %}
-            Untitled
-            {% endif %}
-        </h2>
-        <!-- Move the post body inside the card -->
-        <div class="post-body post-body-border">
-            {{ post.body|linebreaks }}
-        </div>
-        <!-- Add line between post body and comments -->
-        <hr>
-        <!-- Likes section -->
-        <div class="likes-text">
-            Likes: {{ total_likes }}
-            <!-- Button to toggle the add comment popup -->
-            <button class="btn btn-info" onclick="toggleAddCommentPopup()">
-                <img src="{% static 'Linkfeed\comment.svg' %}" width="32" height="32"
-                    fill="black" viewBox="0 0 32 32">
-                <!-- Add comment icon -->
-            </button>
-
-            <!-- Button to toggle the edit post popup -->
-            {% if request.user == post.user %}
-            <button class="btn btn-secondary" onclick="toggleEditPostPopup()">
-                <img src="{% static 'Linkfeed\edit.svg' %}" width="32" height="32"
-                            fill="black" viewBox="0 0 32 32"><!-- Edit icon -->
-            </button>
-            {% endif %}
+<div class="container-fluid">
+    <div class="row pt-5 pb-3 border-bottom">
+        <div class="col">
+            <form id="addCommentForm" method="post" action="{% url 'add_comment' post.id %}">
+                {% csrf_token %}
+                <div class="form-group round">
+                    <textarea class="form-control round" name="comment_body" rows="4" placeholder="Add a comment..."
+                        required></textarea>
+                </div>
+                <button type="submit" class="btn red-button normal-font-button">
+                    Post
+                </button>
+            </form>
         </div>
     </div>
+    
+
+    <!-- Comments section -->
+
+        <div class="comments-dropdown comment-border">
+            <!-- Render comments here -->
+            <div class="scrollable-comments">
+                {% for comment in post.comments.all %}
+                {% if not comment.parent_comment %}
+                <div class="card comment-container border-bottom" id="comment-{{ comment.id}}">
+                    <div class="my-1">
+                        <div class="comment-info">
+                            <div class="row">
+                                <div class="col-12">
+                                    <a href="{% url 'profile' comment.user.username %}" class="wrapped-profile-link">    
+                                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small truncate-text" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ comment.user.profile.display_name }} ({{ comment.user.alloweddomain.domain|slice:"8:" }})</span></p>
+                                    </a>
+                                </div>
+                            </div>
+                            <p class="comment-body">{{ comment.body }}</p>
+                            <div class="row">
+                                {% if request.user == post.user or request.user == comment.user %}
+                                <div class="col post-actions d-flex justify-content-end align-items-end">
+                                    <!-- <a href="{% url 'delete_comment' comment.id %}">
+                                        <img src="{% static 'Linkfeed/delete.svg' %}" style="float: right;" alt="repost" class="svg" width="32" height="32" fill="black" viewBox="0 0 32 32">
+                                    </a> -->
+                                    <img src="{% static 'Linkfeed/delete.svg' %}" alt="Delete" class="delete-btn2 svg mb-1" data-post-id="{{ comment.id }}"
+                                        width="28" height="28" fill="black" class="bi bi-trash" viewBox="0 0 32 32">
+                                </div>
+                                {% endif %}
+                                <div class="col-12 text-muted text-right small">
+                                    {{ comment.timestamp|date:"b j, Y g:i a"|capfirst }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            <!-- Nested replies section -->
+            {% for reply in comment.replies.all %}
+            <div class="card comment-container border-bottom border-left child-comment">
+                <div class="my-3">
+                    <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small truncate-text" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ reply.user.profile.display_name }} ({{ reply.user.alloweddomain.domain|slice:"8:" }}) — {{comment.timestamp }}</span></p>
+                    <p class="comment-body">{{ reply.body }}</p>
+                    <!-- Add delete button for reply with confirmation -->
+                    {% if request.user == post.user or request.user == reply.user %}
+                    <form id="deleteCommentForm{{ reply.id }}" action="{% url 'delete_comment' reply.id %}"
+                        method="post">
+                        {% csrf_token %}
+                        <div class="button-group">
+                            <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ reply.id }}')">
+                                <img src="{% static 'Linkfeed/trashcan.svg' %}" width="22" height="22" fill="black"
+                                    viewBox="0 0 22 22">
+                            </button>
+                        </div>
+                        </form>
+                            <button class="btn btn-primary reply-button">
+                                <img src="{% static 'Linkfeed\reply.svg' %}" width="22" height="22"
+                                    fill="black" viewBox="0 0 22 22"><!-- Reply icon -->
+                            </button>
+                    {% endif %}
+                    <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}"
+                        style="margin-left: 20px; display: none;">
+                        {% csrf_token %}
+                        <input type="hidden" name="parent_comment_id" value="{{ reply.parent_comment.id }}">
+                        <textarea name="comment_body"></textarea>
+                        <button type="submit">
+                            <img src="{% static 'Linkfeed/send.svg' %}" width="22" height="22" fill="black"
+                                    viewBox="0 0 22 22"><!-- Send icon -->
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+            {% empty %}
+            <p>No comments yet.</p>
+            {% endfor %}
+        </div>
+</div>
+<script>
+    // On dom
+    document.addEventListener('DOMContentLoaded', function() {
+    
+        function deletePost(postId, commentId, button) {
+            // Display confirmation pop-up
+            var confirmDelete = confirm('Are you sure you want to delete this post?');
+        
+            // If user confirms deletion, submit the form
+            if (confirmDelete) {
+                // Make a get request to 
+                var xhr = new XMLHttpRequest();
+                var url = "{% url 'delete_comment' 0 %}".replace('0', postId);
+                xhr.open('GET', url, true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+                xhr.send();
+        
+                // Remove the post from the DOM
+                var post = document.getElementById('comment-' + postId);
+                post.remove();
+            }
+        }
+            // Add event listeners to delete buttons
+            var deleteButtons = document.querySelectorAll('.delete-btn2');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var postId = this.getAttribute('data-post-id');
+                    deletePost(postId);
+                });
+            });
+    });
+    
+    </script>
 
     <!-- Edit post popup form -->
     <div id="editPostPopup" class="modal" style="display: none;">
@@ -122,6 +218,7 @@
         </div>
     </div>
 
+<<<<<<< HEAD
     <!-- Comments section -->
     <div class="comments-dropdown comment-border">
         <!-- Render comments here -->
@@ -206,6 +303,8 @@
             {% endfor %}
         </div>
     </div>
+=======
+>>>>>>> c8da0b3970a0c02f02e9917e98af642db17a1f8d
 
     <!-- JavaScript to toggle edit post popup -->
     <script>

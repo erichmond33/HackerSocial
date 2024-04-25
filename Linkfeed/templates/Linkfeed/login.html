@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block styles %}
-    <link rel="stylesheet" href="{% static 'Linkfeed/login.css' %}">
 {% endblock %}
 
 
@@ -18,7 +17,7 @@
       {% csrf_token %}
       <h3>Login</h3>
       <div class="form-group">
-        <input type="text" class="form-control" name="username" placeholder="Username">
+        <input type="text" autofocus class="form-control" name="username" placeholder="Username">
       </div>
       <!-- <div class="form-group">
         <input type="text" class="form-control" name="website" placeholder="Personal website URL">
@@ -27,7 +26,7 @@
         <input type="password" class="form-control" name="password" placeholder="Password">
       </div>
       <div class="form-group">
-        <button type="submit" class="btn btn-primary">Login</button>
+        <button type="submit" class="normal-font-button btn red-button">Submit</button>
       </div>
     </form>
     Don't have an account?

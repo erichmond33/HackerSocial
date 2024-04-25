@@ -1,0 +1,266 @@
+{% extends "Linkfeed/layouts.html" %}
+
+{% load static %}
+
+{% block styles %}
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"> -->
+{% endblock %}
+
+{% block nav %}
+    {% if user.is_authenticated %}
+    <a href="{% url 'current_user_profile' %}" class="">Profile</a>
+    <a href="{% url 'current_user_feed' %}" class="">Feed</a>
+    <a href="{% url 'logout' %}" class="">Log Out</a>
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+<div class="container mt-5">
+    <div class="row my-5">
+        <div class="col-12 col-lg-7 py-4 p-lg-0 pr-xl-3">
+            <h1 class="h1 text-left pb-4" id="main-header">Social media for<div style="background-color: #EA322E; rotate: .5deg;"><div style="rotate: -.5deg; color: white; text-align: center;">&nbsp;the IndieWeb</div></div></h1>
+            <p>We spend so much time and attention on our personal website <i>only to share it via Twitter</i>.</p>
+            <!-- <p>Stay connected and add Linkfeed to yoursite.com/jprofile & yoursite.com/feed -->
+            <!-- <p class="">Bring the focus back to your site with Linkfeed, where Link-focused posts encourage more depth, exploration, connection, and ownership.</p> -->
+            <ul class="">
+                <li>&check; Add site interaction: <a href="#first-card">comments, likes, reshares, follows</a></li>
+                <!-- <li>🔗&thinsp;Drive traffic to you and your friend's static pages</li> -->
+                <li>&check; Create <a href="#second-card">seamless personalization</a> with custom CSS</li>
+                <li>&check; Integrate exsisting <a href="#third-card">content/workflows</a> with RSS</li>
+                <!-- <li>&check; Link-only posts encourage more depth, exploration, connection, and ownership.</li> -->
+            </ul>
+            <div class="">
+                <button id="main-button" class="red-button btn mt-3"><a href="{% url 'register' %}" id="">Sign up</a></button>
+            </div>
+        </div>
+        <div class="col-lg-5 col-sm-8 col-12 py-4 px-lg-0 text-center mx-auto">
+            <img id="main-image" src="{% static 'Linkfeed/photos/lp.png' %}" alt="Landing page image" class="img-fluid m-lg-2">
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid container-secondary">
+    <div class="container">
+        <div class="row my-4" id="row-why">
+            <div class="col-12 m-auto">
+                <h1 class="mb-5">Why</h1>
+                <p class="mx-0 px-3 mx-lg-5 px-lg-5" style="border-left: 1px solid black;">"I love personal websites and the
+                    kind of people that build them.
+                    <br><br>There is no good way for me to share my site's content with my friends.
+                    <br><br>Tradition social media discourages links and is attention abusive, yet normal people can't be
+                    expected to write backend code." — Eli
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+<div class="container">
+    <div class="row my-5 pt-3">
+        <div class="col-12 mb-5">
+            <h1>How it works</h1>
+        </div>
+        <div class="col-12 mx-auto">
+            <h2>1. <span>Sign up</span></h2>
+            <p>Sign up with your email and password. You can also sign in with your Google account.</p>
+            <button id="" class="red-button btn"><a href="{% url 'register' %}" id="">Sign up</a></button>
+        </div>
+    </div>
+    <div class="row mt-5">
+        <div class="col-12 mx-auto">
+            <h2>2. <span>Copy code to /profile</span></h2>
+            <p>A key feature is imploring users to visit your personal site.
+                Copy this code block into /profile on your own website.</p>
+            <pre>&lt;iframe src="http://127.0.0.1:8000/Linkfeed/profile/Eli%20Richmond/" style="border:none;height:100%;width:100%;"&gt;&lt;/iframe&gt;</pre>
+        </div>
+    </div>
+    <div class="row mt-5">
+        <div class=" col-12 mx-auto">
+            <h2>3. <span>Copy code to /feed</span></h2>
+            <p>Just like step 2, copy this code block into /feed.</p>
+            <pre>&lt;iframe src="http://127.0.0.1:8000/Linkfeed/profile/Eli%20Richmond/" style="border:none;height:100%;width:100%;"&gt;&lt;/iframe&gt;</pre>
+        </div>
+    </div>
+    <div class="row my-5">
+        <div class="col-12 mx-auto">
+            <h2>4. <span>If this is confusing...</span></h2>
+            <p>Feel free to shoot me an <a href="#">email</a>. I'd be happy to help :)</p>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="container-fluid container-secondary">
+<div class="container">
+    <div class="row text-center my-4">
+        <h1 class="mb-3">Features</h1>
+        <div class="card-group mx-auto">
+            <div class="card background p-3 border-0">
+                <img src="{% static 'Linkfeed/photos/lp.png' %}" class="card-img-top round" id="first-card">
+                <div class="card-body">
+                    <h3 id="h3_6_1" class="card-title text-center">More Control</h3>
+                    <p id="p6_1" class="card-text body">Social media features... on your static site</p>
+                </div>
+            </div>
+            <div class="card background p-3 border-0">
+                <img src="{% static 'Linkfeed/photos/lp.png' %}" class="card-img-top round" id="second-card">
+                <div class="card-body">
+                    <h3 id="h3_6_2" class="card-title text-center">Personalization</h3>
+                    <p id="p6_2" class="card-text body">Use custom styling by importing your own CSS</p>
+                </div>
+            </div>
+            <div class="card background p-3 border-0">
+                <img src="{% static 'Linkfeed/photos/lp.png' %}" class="card-img-top round" id="third-card">
+                <div class="card-body">
+                    <h3 id="h3_6_3" class="card-title text-center">RSS Integration</h3>
+                    <p id="p6_3" class="card-text body">Follow RSS feeds and post from your own</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="container-fluid">
+<div class="container">
+    <div class="row my-5">
+        <div class="col-12 mb-1">
+            <h1>Register</h1>
+        </div>
+        <div class="form-container col-sm-8 col-md-6 col-10 pt-5 mx-auto">
+            {% if message %}
+                <div class="alert alert-info">{{ message }}</div>
+            {% endif %}
+            
+            <form action="{% url 'register' %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input class="form-control" type="text" name="username" placeholder="Display Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="url" id="" class="form-control" name="link" placeholder="Personal Site URL" required>
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="email" name="email" placeholder="Email Address" required>
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="password" name="password" placeholder="Password" required>
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="password" name="confirmation" placeholder="Confirm Password" required>
+                </div>
+                <div class="text-center">
+                    <button class="red-button btn" type="submit" value="Register">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="container">
+<div class="row my-5 pt-5" id="footer-row">
+    <div class="col-sm-6 col-12 mx-auto px-3 px-md-5 d-flex flex-column justify-content-center align-items-center align-items-sm-end">
+        <div><p>This is me.</p>
+        <p>I make stuff.</p>
+        <p>Check it out bloge.li</p></div>
+    </div>
+    <div class="col-sm-6 col-8 mx-auto px-3 px-md-5 d-flex flex-column justify-content-center align-items-center align-items-sm-start">
+        <img id="footer-img" src="{% static 'Linkfeed/photos/pp3.png' %}" alt="Landing page image" class="img-fluid my-3 rounded w-75">
+    </div>
+</div>
+</div>
+
+<style>
+    body {
+        max-width: 100vw;
+        margin:0 auto;
+    }
+
+    #main-header {
+        font-size: 3.4rem;
+        /* font-size: clamp(1rem, 8vmin, 3rem); */
+    }
+
+    #main-signup {
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    #main-button {
+        font-size: 120%;
+    }
+
+    .container-fluid {
+        padding: 0;
+    }
+
+    .container-secondary {
+        background-color: #fff;
+        padding-block: 20px;
+        box-shadow: 0 0 1em 0 rgba(0,0,0,0.5);
+    }
+
+    #main-image {
+        border-radius: 10px;
+    }
+
+    #first-card, #second-card, #third-card {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    
+    .round {
+        border-radius: 10px;
+    }
+    /* bootstrap breakpoints */
+    /* @media (min-width: 576px) {
+        #main-header {
+            font-size: 3rem;
+        }
+    } */
+
+    #footer-row {
+        border-top: 1px solid black;
+    }
+
+    #footer-img {
+        max-width: 250px;
+    }
+
+    @media (max-width: 991.98px) {
+        .card-group {
+            flex-direction: column;
+            max-width: 500px;
+        }
+    }
+
+
+    @media (max-width: 767.98px) {
+        .card-group {
+            max-width: 400px;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .card-group {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 548px) {
+        #main-header {
+            font-size: clamp(2.25rem, 8vmin, 3.4rem);
+        }
+    }
+
+
+</style>
+
+
+{% endblock %}
