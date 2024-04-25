@@ -675,19 +675,29 @@ def search_users(request):
 
 
 def upload_css(request):
-    # Assuming you have a UserCSS model and each user can have their custom CSS link
-    # You might need to adjust this logic based on your actual implementation
-    if request.user.is_authenticated:
-        try:
-            user_css = UserCSS.objects.get(user=request.user)
-            custom_css_link = user_css.link
-        except UserCSS.DoesNotExist:
-            # If the user doesn't have a custom CSS link, you can return a default one
-            custom_css_link = "default_css_link.css"
-        
-        # Construct JSON response
-        data = {'link': custom_css_link}
-        return JsonResponse(data)
-    else:
-        # If the user is not authenticated, return an error message or handle it as needed
-        return JsonResponse({'error': 'User not authenticated'}, status=401)
+    if request.method == 'GET':
+        # Assuming you want to retrieve the latest uploaded CSS for the current user
+        user = request.user
+        latest_css = UserCSS.objects.filter(user=user).order_by('-id').first()
+        if latest_css:
+            css_link = latest_css.link
+            # Redirect to user profile page with CSS link as a query parameter
+            return JsonResponse({'link': css_link})
+        else:
+            # Redirect to user profile page without CSS link
+            return JsonResponse({'link': ''})
+
+    elif request.method == 'POST':
+        form = UserCSSForm(request.POST)
+        if form.is_valid():
+            newUserCSS = UserCSS()
+            newUserCSS.user = request.user
+            cssLink = form.cleaned_data['link']
+            newUserCSS.link = cssLink
+            newUserCSS.save()
+            data = {'link': cssLink}
+            # Redirect to user profile page after successful CSS upload
+            return redirect('profile')
+        else:
+            # Handle form validation errors, redirect to user profile page
+            return JsonResponse({'error': 'User not authenticated'}, status=401)

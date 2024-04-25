@@ -206,14 +206,14 @@
                     <span>&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <form id="uploadCSS" method="post" action="{% url 'upload_css' %}">
+                        <div class="modal-body">
+                <form id="cssUpload" method="post" action="{% url 'upload_css' %}">
                     {% csrf_token %}
                     <div class="form-group">
-                        <label for="cssFeedLink">CSS Feed Link:</label>
-                        <input type="url" class="form-control" id="cssFeedLink" name="link" placeholder="Enter CSS Link">
+                        <label for="CSSUpload">CSS Upload:</label>
+                        <input type="url" class="form-control" id="cssUploadLink" name="link" placeholder="Link to CSS">
                     </div>
-                    <button type="button" class="btn btn-primary" onclick="applyCustomCSS()">Apply CSS</button>
+                    <button type="submit" class="btn btn-primary" onclick="applyCustomCSS()">Submit</button>
                 </form>
             </div>
         </div>
@@ -269,7 +269,22 @@
         })
         .catch(error => console.error('Error:', error));
     }
-
+    function applyCustomCSS() {
+        var customCSSLink = document.getElementById("cssFeedLink").value;
+        var head = document.head || document.getElementsByTagName('head')[0];
+        var existingCSSLink = document.getElementById("customCSS");
+        
+        if (existingCSSLink) {
+            existingCSSLink.href = customCSSLink;
+        } else {
+            var cssLink = document.createElement('link');
+            cssLink.rel = 'stylesheet';
+            cssLink.type = 'text/css';
+            cssLink.href = customCSSLink;
+            cssLink.id = "customCSS";
+            head.appendChild(cssLink);
+        }
+    }
     function toggleUploadSearchPopup() {
         var popup = document.getElementById('uploadSearchPopup');
         if (popup.style.display === 'none') {
