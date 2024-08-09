@@ -1,161 +1,62 @@
-{% comment %} {% load static %} {% endcomment %}
 {% load static %}
-<html lang="en">
-
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">    <link href="{% static 'Linkfeed/style.css' %}" rel="stylesheet">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <!-- <script src="{% static 'Linkfeed/customcss.js' %}"></script> -->
-    <title>Document</title>
-    {% block styles %}
-    {% endblock %}
-
-
+    <link href="{% static 'Linkfeed/bootstrap-grid.css' %}" rel="stylesheet">
+    <link href="{% static 'Linkfeed/style.css' %}" rel="stylesheet">
+    <title>Hacker Social</title>
     {% block head %}
     {% endblock %}
 </head>
-
-<body class="mx-auto">
-    <div class="vignette">
-        <svg viewBox='0 0 252 252' xmlns='http://www.w3.org/2000/svg'>
-            <filter id='noiseFilter'>
-                <feTurbulence type='fractalNoise' baseFrequency='6' numOctaves='5' stitchTiles='stitch' />
-                <feColorMatrix type='saturate' values='0' />
-            </filter>
-    
-            <rect height='100%' filter='url(#noiseFilter)' opacity='0.25' />
-        </svg>
-    </div>
-
-    <div id="mySidebar" class="sidebar">
-        <a href="{% url 'landing' %}" target="_blank"><h1 id="logo">Linkfeed</h1></a>
+<body>
+    <h1 class="my-0 ellipsis">
+        <a href="{% url 'current_user_profile' %}">
+        {% block name %}
+        {% endblock %}
+        </a>
+    </h1>
+    <nav class="d-flex justify-content-between">
         {% block nav %}
         {% endblock %}
-    </div>
-
-    <div class="container-fluid px-3">
-            <div class="row">
-                <div class="col-10">
-                    <h1 id="username-header" class="header truncate-text">
-                    {% if request.resolver_match.url_name == 'current_user_profile' or request.resolver_match.url_name == 'profile' %}
-                        <a href="{% url 'feed' profile.user.username %}">{{ profile.display_name }}</a>
-                    {% elif request.resolver_match.url_name == 'current_user_feed' or request.resolver_match.url_name == 'feed' %}
-                        <a href="{% url 'profile' profile.user.username %}">{{ profile.display_name }}</a>
-                    {% elif request.resolver_match.url_name == 'post' %} 
-                        <a href="{% url 'profile' profile.user.username %}">{{ profile.display_name }}</a>
-                    {% else %}
-                        <a href="{% url 'landing' %}">Linkfeed</a>
-                    {% endif %}
-                    </h1>
-                </div>
-                <div class="col-2 d-flex justify-content-end align-items-center">
-                    <!-- <button class="open-btn" id="open-btn" onclick="openNav()"><img src="{% static 'Linkfeed/burger.svg' %}" alt="menu" width="32" height="32"></button> -->
-                    <button class="open-btn" id="open-btn" onclick="openNav()"><h1 id="nav-header" class="header">¬</h1></button>
-                </div>
-            </div>
-    </div>
-
-    <script>
-        function openNav() {
-            // Check if the width of side bar > 0
-            if (document.getElementById("mySidebar").style.width > "0px") {
-                document.getElementById("mySidebar").style.width = "0px";
+        {% if user.is_authenticated %}
+            <a href="{% url 'profile' profile.user.username %}" {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'current_user_profile'  %}class="active"{% endif %}>Profile</a> |
+            <a href="{% url 'feed' profile.user.username %}" {% if request.resolver_match.url_name == 'feed' %}class="active"{% endif %}>Feed</a> | 
+            <a href="{% url 'rss' %}" {% if request.resolver_match.url_name == 'rss' %}class="active"{% endif %}>RSS</a> |
+            <a href="{% url 'edit_profile' %}" {% if request.resolver_match.url_name == 'edit_profile' %}class="active"{% endif %}>Edit</a> |
+            <a href="{% url 'search' %}" {% if request.resolver_match.url_name == 'search' %}class="active"{% endif %}>Search</a> |
+            <a href="{% url 'notifications' %}" {% if request.resolver_match.url_name == 'notifications' %}class="active"{% endif %}">Notifications</a>
+        {% endif %}
+    </nav>
+    {% block body %}    
+    {% endblock %}
+    {% csrf_token %}
+</body>
+<script>
+    function likePost(postId) {
+        var csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+        fetch(`/Linkfeed/like/${postId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const likeSpan = document.querySelector(`#like-${postId}`);
+            if (data.total_likes == 0) {
+                likeSpan.textContent = 'like';
             }
             else {
-                document.getElementById("mySidebar").style.width = "250px";
-            }
-        }
-    </script>
-
-    <style>
-        #open-btn {
-            background-color: transparent;
-            border: transparent;
-        }
-        #open-btn:focus {
-            background-color: transparent;
-            border: transparent;
-            outline: none;
-        }
-        #logo {
-            color:black;
-            font-family: Sabado;
-        }
-        .sidebar {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            left: 0;
-            background-color: white;
-            overflow-x: hidden;
-            transition: 0.3s;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: left;
-            z-index: 2;
-            box-shadow: 0 0 1em 0 rgba(0,0,0,0.5);
-        }
-        .sidebar a {
-            display: block;
-            padding-block-start: 10px;
-            padding-block-end: 10px;
-            padding-left: 20px;
-            transition: 0.2s;
-            text-align: left;
-            font-family: Nexa;
-        }
-        .sidebar a:hover {
-            color: #EA322E;
-            background-color: #f1f1f1;
-        }
-    </style>
-
-    <div id="redirect-popup" class="modal modal-open" style="display: none;">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">You aren't logged in</h5>
-                </div>
-                <div class="modal-body">
-                    <div>
-                        <p>For saftey, login or register at our domain.</p>
-                        <button type="button" class="normal-font-button btn red-button"
-                            onclick="window.top.location.href = window.location.href;">Redirect</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Check if we are in an iframe
-            if (window.self !== window.top) {
-                // Check if the page includes "/login" or "/register"
-                if (window.location.href.includes('/login') || window.location.href.includes('/register')) {
-                    // Show the popup
-                    document.getElementById('redirect-popup').style.display = 'block';
-                    // Blur the background
-                    var c = document.querySelectorAll('.container-fluid')
-                    c.forEach(function (container) {
-                        container.style.filter = 'blur(4px)';
-                    });
+                if (data.liking) {
+                    likeSpan.textContent = `liked (${data.total_likes})`;
+                }
+                else {
+                    likeSpan.textContent = `like (${data.total_likes})`;
                 }
             }
+            console.log(data);
         });
-    </script>
-
-    {% block body %}
-    {% endblock %}
-
-
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-
+    }
+</script>
 </html>

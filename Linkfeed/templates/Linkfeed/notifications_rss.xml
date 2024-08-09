@@ -1,0 +1,10 @@
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>Notifications ({{ profile.display_name}})</title>
+    
+    {% for notification in notifications %}
+        {% include 'Linkfeed/notification_rss.xml' %}
+    {% endfor %}
+    
+    </feed>
+    
+    

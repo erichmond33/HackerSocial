@@ -1,0 +1,59 @@
+{% extends "Linkfeed/layouts.html" %}
+
+{% block name %}
+    {{ request.user.profile.display_name }}
+{% endblock %}
+
+{% block body %}
+    <h2>Search Users</h2>
+    <form method="post" action="{% url 'search' %}" class="d-flex justify-content-between">
+        {% csrf_token %}
+        <input type="text" name="query" id="searchQuery" value="{{ query }}" required>
+        <button type="submit">Submit</button>
+    </form>
+    
+    {% if query %}
+        <h3>Results</h3>
+        <div id="searchResults">
+            {% for profile in profiles %}
+                <p class="mb-0">
+                    <a href="{% url 'profile' profile.user.username %}">
+                        <span class="display-name">{{ profile.display_name }}</span>
+                        <span class="small grey">(@<span class="username">{{ profile.user.username }}</span>)</span>
+                    </a>
+                </p>
+                <p class="mt-0">
+                    <a class="red small" href="{{ profile.domain }}" target="_blank">
+                        <span class="domain">{{ profile.domain }}</span>
+                    </a>
+                </p>
+            
+            {% empty %}
+                <p>No results found.</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <script>
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        function highlightSearchResults() {
+            const query = document.getElementById('searchQuery').value.trim();
+            if (!query) return;
+
+            const resultsContainer = document.getElementById('searchResults');
+            const elements = resultsContainer.querySelectorAll('.display-name, .username, .domain');
+
+            elements.forEach(element => {
+                element.innerHTML = highlightText(element.textContent, query);
+            });
+        }
+
+        // Call the function when the page loads
+        window.onload = highlightSearchResults;
+    </script>
+{% endblock %}

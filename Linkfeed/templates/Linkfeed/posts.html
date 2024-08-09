@@ -1,89 +1,36 @@
-{% load static %}
+{% load custom_filters %}
 
-<div class="container-fluid">
-    <div class="post border-bottom">
-        <a href="{% url 'profile' post.user.username %}" class="wrapped-profile-link">
-            <div class="row wrapped-profile">
-                <div class="col-11">
-                    {% if post.is_imported_rss_feed_post %}
-                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small truncate-text" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">RSS Feed ({{ post.imported_rss_feed.link|slice:"8:" }})</span></p>
-                    {% elif not post.is_rss_feed_post or post.is_rss_feed_post %} <!-- the latter means it is a mirrored rss post -->
-                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small truncate-text" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ post.user.profile.display_name }} ({{ post.user.alloweddomain.domain|slice:"8:" }})</span></p>
-                    {% endif %}
-                </div>
-                <div class="col-1 text-right">
-                    {% if post.is_imported_rss_feed_post or post.is_rss_feed_post %} <!-- the latter means it is a mirrored rss post -->
-                        <img src="{% static 'Linkfeed/rss.svg' %}" alt="repost" class="svg" width="32" height="32" fill="black" viewBox="0 0 32 32" onclick="rePostPost('{{ post.id }}')">
-                    {% elif not post.is_rss_feed_post %}
-                        <img src="{% static 'Linkfeed/link.svg' %}" style="float: right;" alt="repost" class="svg" width="32" height="32" fill="black" viewBox="0 0 32 32" onclick="rePostPost('{{ post.id }}')">
-                    {% endif %}
-                </div>
-            </div>
-        </a>
-        <a href="{{ post.body }}" target="_blank" class="wrapped-post-link">
-            <div class="wrapped-post pb-3">
-                        <h4 class="post-title mb-0">{{ post.title }}</h4>
-                        <p class="post-body mt-2">{{ post.body }}</p>
-            </div>
-        </a>
-        <div class="row">
-            <div class="col post-actions d-flex justify-content-end align-items-end">
-                <form id="shareForm{{ post.id }}" action="{% url 'repost' post.pk %}" method="POST" class="d-inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="post_id" value="{{ post.id }}">
-                    <!-- Hidden input field to hold the post id -->
-                </form>
-                <img src="{% static 'Linkfeed/reshare.svg' %}" alt="repost" class="share-svg svg" width="32" height="32" fill="black" viewBox="0 0 32 32" onclick="rePostPost('{{ post.id }}')">
-                <span class="post-stats">{{post.repost_count}}</span>
-                                    <!-- Form for like/unlike -->
-                <form id="likeForm{{ post.id }}" action="{% url 'like_post' post.pk %}" method="POST" class="d-inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="post_id" value="{{ post.id }}">
-                    <!-- Hidden input field to hold the post id -->
-                </form>
-                {% if post.liked %}
-                <img src="{% static 'Linkfeed/liked.svg' %}" alt="Like" class="like-svg svg" width="32" height="32" fill="black"
-                class="bi bi-heart" viewBox="0 0 32 32" onclick="likePost('{{ post.id }}')">
-                 {% else %}
-                 <img src="{% static 'Linkfeed/like.svg' %}" alt="Like" class="like-svg svg" width="32" height="32" fill="black"
-                class="bi bi-heart" viewBox="0 0 32 32" onclick="likePost('{{ post.id }}')">
-                {% endif%}
-                <span id="likeCount{{ post.id }}" class="post-stats">{{ post.total_likes }}</span>
-    
-    
-                <a href="{% url 'post' post.id %}" class="pl-1" id="post-comment">
-                    <img src="{% static 'Linkfeed/comment.svg' %}" alt="Comment" class="comment-svg svg" width="26" height="26"
-                        fill="black" class="bi bi-chat" viewBox="0 0 32 32">
-                    <span class="post-stats">{{post.total_comments}}</span>
-                </a>
-                {% if post.user == user %}
-                <form id="deleteForm{{ post.id }}" action="{% url 'delete_post' post_id=post.id %}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this post?');">
-                    {% csrf_token %}
-                    <input type="hidden" name="post_id" value="{{ post.id }}">
-                </form>
-    
-                <img src="{% static 'Linkfeed/delete.svg' %}" alt="Delete" class="delete-btn svg mb-1" data-post-id="{{ post.id }}"
-                    width="28" height="28" fill="black" class="bi bi-trash" viewBox="0 0 32 32">
-                {% endif %}
-            </div>
-            <div class="col-12 text-muted text-right small">
-                {{ post.timestamp|date:"b j, Y g:i a"|capfirst }}
-            </div>
-        </div>
-    </div>
-</div>
+<p class="my-0">
+    <a href="{{ post.body }}" target="_blank">{{ post.title }}</a>
+</p>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // When .wrapped-post is hovered, make the .post background-color: #f8f9fa
-        var wrappedPost = document.querySelectorAll('.wrapped-post');
-        wrappedPost.forEach(function(post) {
-            post.addEventListener('mouseover', function() {
-                post.parentElement.parentElement.parentElement.style.backgroundColor = '#f8f9fa';
-            });
-            post.addEventListener('mouseout', function() {
-                post.parentElement.parentElement.parentElement.style.backgroundColor = 'transparent';
-            });
-        });
-    });
-</script>
+<p class="small grey my-0 pt-1">
+    <a href="{% url 'profile' post.user.username %}" target="_blank">
+        {{ post.user.profile.display_name }}
+    </a> •
+
+    {{ post.timestamp|smart_date|capfirst }} •
+
+    <a href="{% url 'post' post.id %}">
+        comment {% if post.total_comments %}({{post.total_comments}}){% endif %}
+    </a> •
+
+    {% if request.user.is_authenticated %}
+    <a href="#" id="like-{{ post.id }}" onclick="likePost('{{ post.id }}')">
+        {% if post.liked %}liked{% else %}like{% endif %}
+        {% if post.total_likes %}({{post.total_likes}}){% endif %}
+    </a>
+    {% else %}
+    <a href="{% url 'login' %}?next={{ request.path }}">
+        {% if post.liked %}liked{% else %}like{% endif %}
+        {% if post.total_likes %}({{post.total_likes}}){% endif %}
+    </a>
+    {% endif %}
+
+    {% if request.user == post.user %}
+    • <a href="{% url 'edit_post' post.id %}">edit</a>
+    {% endif %}
+</p>
+<p class="small red mt-0">
+    <a href="{{ post.body }}" target="_blank">{{ post.body }}</a>
+</p>

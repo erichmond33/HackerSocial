@@ -1,389 +1,65 @@
 {% extends "Linkfeed/layouts.html" %}
-{% load static %}
 
-{% block styles %}
-    <style>
-        .fixed-bottom {
-            display: flex;
-            justify-content: flex-end;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-        }
-
-        .fixed-bottom .btn {
-            margin-left: 10px;
-        }
-    </style>
+{% block name %}
+    {{ profile.display_name }}
 {% endblock %}
 
 {% block nav %}
-<a href="{% url 'current_user_feed' %}" class="">Feed</a>
-<a href="{% url 'refresh_mirrored_rss_feed' %}" class="">Refresh RSS Feed</a>
-{% if profile.user.username == user.username %}
-<a id="mirror-rss-feed-btn" onclick="toggleMirrorRSSFeedPopup()" class="">Mirror RSS Feed</a>
-<a id="upload-css-link-btn" onclick="uploadCSSPopup()" class="">Upload CSS</a>
-<a id="search-btn" onclick="uploadSearchPopup()" class="">Search</a>
-{% endif %}
+    {% if not request.user.is_authenticated %}
+        {% include 'Linkfeed/logged_out_nav.html' %}
+    {% endif %}
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid">   
-    <div class="row">
-            <div class="col-12">
-                <a class="truncate-text pl-1" id="profile-link" target="_blank" href="{{profile.link}}">{{profile.link}}</a>
+    <div class="red d-flex justify-content-center align-items-center my-5 py-5">
+        <a target="_blank" href="{{profile.link}}">{{profile.stripped_link}}</a>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <div class="mb-1 d-flex">
+            {% include 'Linkfeed/powered_by.html' %}
+        </div>
+        <div class="small grey mb-1 d-flex">
+            <a href="{% url 'following' profile.user.username %}">Following {{profile.following_count|safe}}</a>&nbsp;•&nbsp;
+            <a href="{% url 'followers' profile.user.username %}">Followers {{profile.followers_count|safe}}</a>
+        </div>
+    </div>
+
+    {% if profile.user.username == user.username %}
+        <form method="post" action="{% url 'create_post' %}" class="d-flex justify-content-between">
+            {% csrf_token %}
+            <input type="text" name="title" placeholder="Title" required>
+            <input type="url" name="body" placeholder="URL" required>
+            <button type="submit">Post</button>
+        </form>
+        <h2>
+            Posts
+        </h2>
+    {% else %}
+        <div class="d-flex justify-content-between">
+            <h2 class="mt-0">
+                Posts
+            </h2>
+            <div>
+                <button>
+                    {% if user not in profile.follower.all %}
+                        <a href="{% url 'follow_or_unfollow' profile.user.username %}">Follow</a>
+                    {% elif user in profile.follower.all %}
+                        <a href="{% url 'follow_or_unfollow' profile.user.username %}" id="following-text">Unfollow</a>
+                    {% endif %}
+                </button>
             </div>
-    </div>
-    <div class="row my-4" id="row-follow">
-        <div class="col d-flex justify-content-around">
-            <a class="row-follow-button" id="followers-link" style="cursor: pointer;">Followers: {{ profile.follower.count }}</a>
-            <a class="row-follow-button" id="following-link" style="cursor: pointer;">Following: {{ profile.following.count }}</a>
-            {% if profile.user.username == user.username %}
-            <a href="#" class="row-follow-button follow-button" onclick="toggleEditProfilePopup()">Edit Profile</a>
-            {% elif not following %}
-            <a href="{% url 'follow_or_unfollow' profile.user.username %}" class="row-follow-button follow-button">Follow</a>
-            {% elif following %}
-            <a href="{% url 'follow_or_unfollow' profile.user.username %}" id="following-text"
-                class="row-follow-button follow-button">Following</a>
-            <script>
-                document.getElementById('following-text').addEventListener('mouseover', function () {
-                    this.innerHTML = 'Unfollow';
-                });
-                document.getElementById('following-text').addEventListener('mouseout', function () {
-                    this.innerHTML = 'Following';
-                });
-            </script>
-            {% endif %}
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    // Set the width of the follow button the the width of #following-link
-                    var followButton = document.querySelector('.follow-button');
-                    var followingLink = document.getElementById('following-link');
-                    followButton.style.width = followingLink.offsetWidth + 'px';
-                });
-
-                window.addEventListener("resize", function() {
-                    // Update the width of the follow button on page resize
-                    var followButton = document.querySelector('.follow-button');
-                    var followingLink = document.getElementById('following-link');
-                    followButton.style.width = followingLink.offsetWidth + 'px';
-                });
-            </script>
-            </script>
-            </script>
         </div>
-    </div>
-</div>
+    {% endif %}
 
-<div id="posts" class="mt-5">
-    <div class="">
-        {% if profile.user.username == user.username %}
-        <div class="container-fluid">
-            <form class="mx-auto mb-0 pb-5 pt-3 border-bottom" id="create-post-form" method="post" action="{% url 'create_post' %}">
-                {% csrf_token %}
-                <div class="post-title form-group">
-                    <input type="text" id="title-input" class="form-control" name="title" placeholder="Title">
-                </div>
-                <div class="row">
-                    <div class="col-9 pr-sm-4 pr-2">
-                        <div class="post-body form-group">
-                            <input type="url" id="body-input" class="form-control" name="body" placeholder="URL">
-                        </div>
-                    </div>
-                    <div class="col-3 pl-0">
-                        <button type="submit" class="btn red-button" id="create-post-button">Post</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-        {% endif %}
-        {% for post in posts %}
+    {% for post in posts %}
+        <div class="post">
             {% include 'Linkfeed/posts.html' %}
-        {% endfor %}
-    </div>
-</div>
-
-<!-- Edit Profile Modal -->
-<div id="editProfilePopup" class="modal" style="display: none;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Profile</h5>
-                <button type="button" class="close" onclick="toggleEditProfilePopup()">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="editProfileForm" method="post" action="{% url 'edit_profile' %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="profile-link">Profile Link</label>
-                        <small class="text-muted">({{ profile.link }})</small>
-                        <input type="url" class="form-control" id="profile-link" name="link" placeholder="Enter your new profile link">
-                    </div>
-                    <div class="form-group">
-                        <label for="profile-link">Display Name</label>
-                        <small class="text-muted">({{ profile.display_name }})</small>
-                        <input type="text" class="form-control" id="display-name" name="display_name" placeholder="Enter your new display name">
-                    </div>
-                    <div class="form-group">
-                        <label for="profile-link">Username </label>
-                        <small class="text-muted">({{ profile.user.username }})</small>
-                        <input type="text" class="form-control" id="" name="username" placeholder="Enter your new username">
-                    </div>
-                    <button type="submit" class="normal-font-button red-button btn">Save</button>
-                </form>
-            </div>
         </div>
-    </div>
-</div>
-<!-- End Edit Profile Modal -->
+    {% endfor %}
 
-<!-- Mirror RSS Feed Modal -->
-<div id="mirrorRSSFeedPopup" class="modal" style="display: none;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Mirror RSS Feed</h5>
-                <button type="button" class="close" onclick="toggleMirrorRSSFeedPopup()">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="mirrorRSSFeedForm" method="post" action="{% url 'mirror_rss_feed' %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="rssFeedLink">RSS Feed Link:</label>
-                        <input type="url" class="form-control" id="rssFeedLink" name="link" placeholder="Enter RSS Feed link">
-                    </div>
-                    <button type="submit" class="normal-font-button red-button btn">Mirror</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- End Mirror RSS Feed Modal -->
-<!-- Upload CSS Modal -->
-<div id="uploadCSSPopup" class="modal" style="display: none;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Upload CSS</h5>
-                <button type="button" class="close" onclick="uploadCSSPopup()">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="uploadCSS" method="post" action="{% url 'upload_css' %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="cssFeedLink">CSS Feed Link:</label>
-                        <input type="url" class="form-control" id="cssFeedLink" name="link" placeholder="Enter CSS Link">
-                    </div>
-                    <button type="button" class="btn btn-primary" onclick="applyCustomCSS()">Apply CSS</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- End CSS Modal -->
-
-<!-- Search Popup -->
-<div id="uploadSearchPopup" class="modal" style="display: none;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Search</h5>
-                <button type="button" class="close" onclick="toggleUploadSearchPopup()">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="searchProfileForm" method="post" action="{% url 'search_users' %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="search-user">Search User:</label>
-                        <input type="text" class="form-control" id="search-user" placeholder="Type to search users">
-                    </div>
-                    <ul id="filtered-user-list" style="list-style: none; padding: 0;"></ul>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!--End Search Popup-->
-<script>
-    document.getElementById('search-user').addEventListener('input', function() {
-        var query = this.value;
-        if (query.length > 0) {
-            fetchFilteredUsers(query);
-        } else {
-            document.getElementById('filtered-user-list').innerHTML = '';
-        }
-    });
-
-    function fetchFilteredUsers(query) {
-        fetch('search-users/?query=' + query)
-        .then(response => response.json())
-        .then(data => {
-            var filteredUserList = document.getElementById('filtered-user-list');
-            filteredUserList.innerHTML = '';
-            data.users.forEach(function(username) {
-                var li = document.createElement('li');
-                li.textContent = username;
-                filteredUserList.appendChild(li);
-            });
-        })
-        .catch(error => console.error('Error:', error));
-    }
-
-    function toggleUploadSearchPopup() {
-        var popup = document.getElementById('uploadSearchPopup');
-        if (popup.style.display === 'none') {
-            popup.style.display = 'block';
-        } else {
-            popup.style.display = 'none';
-        }
-    }
-
-    // Function to handle clicks on user profiles in the search results
-    function redirectToUserProfile(userId) {
-        // Construct the URL of the user's profile page using the user ID
-        var userProfileUrl = "/Linkfeed/profile/" + username; // Replace "/profiles/" with the actual URL of your profile page
-
-        // Redirect the user to the profile page
-        window.location.href = userProfileUrl;
-    }
-
-document.addEventListener("DOMContentLoaded", function() {
-    // Add event listener to the filtered user list
-    var filteredUserList = document.getElementById("filtered-user-list");
-    filteredUserList.addEventListener("click", function(event) {
-        // Check if the clicked element is a list item
-        if (event.target.tagName === "LI") {
-            // Extract the username from the clicked list item
-            var username = event.target.textContent; // Get the username directly from the clicked list item
-
-            // Redirect the user to the profile page
-            redirectToUserProfile(username);
-        }
-    });
-});
-
-// Function to handle clicks on user profiles in the search results
-function redirectToUserProfile(username) {
-    // Construct the URL of the user's profile page using the username
-    var userProfileUrl = "/Linkfeed/profile/" + username; // Replace "/profiles/" with the actual URL of your profile page
-
-    // Redirect the user to the profile page
-    window.location.href = userProfileUrl;
-}
-
-</script>
-<script>
-    function uploadCSSPopup() {
-        var popup = document.getElementById("uploadCSSPopup");
-        popup.style.display = popup.style.display === "none" ? "block" : "none";
-    }
-    function toggleCreatePostPopup() {
-        var popup = document.getElementById("createPostPopup");
-        popup.style.display = popup.style.display === "none" ? "block" : "none";
-    }
-        function applyCustomCSS() {
-        var customCSSLink = document.getElementById("cssFeedLink").value;
-        var head = document.head || document.getElementsByTagName('head')[0];
-        var existingCSSLink = document.getElementById("customCSS");
-    
-        if (existingCSSLink) {
-            existingCSSLink.href = customCSSLink;
-        } else {
-            var cssLink = document.createElement('link');
-            cssLink.rel = 'stylesheet';
-            cssLink.type = 'text/css';
-            cssLink.href = customCSSLink;
-            cssLink.id = "customCSS";
-            head.appendChild(cssLink);
-        }
-    }
-
-    function toggleMirrorRSSFeedPopup() {
-        var popup = document.getElementById("mirrorRSSFeedPopup");
-        popup.style.display = popup.style.display === "none" ? "block" : "none";
-    }
-
-    function uploadSearchPopup() {
-        var popup = document.getElementById("uploadSearchPopup");
-        popup.style.display = popup.style.display === "none" ? "block" : "none";
-    }
-    function toggleEditProfilePopup() {
-        var popup = document.getElementById("editProfilePopup");
-        popup.style.display = popup.style.display === "none" ? "block" : "none";
-    }
-
-    var followersLink = document.getElementById('followers-link');
-    followersLink.addEventListener('mouseover', function() {
-        this.style.textDecoration = 'underline';
-    });
-
-    followersLink.addEventListener('mouseout', function() {
-        this.style.textDecoration = 'none';
-    });
-
-    followersLink.addEventListener('click', function() {
-        window.location.href = "{% url 'followers' profile.user.username %}";
-    });
-
-    var followingLink = document.getElementById('following-link');
-    followingLink.addEventListener('mouseover', function() {
-        this.style.textDecoration = 'underline';
-    });
-
-    followingLink.addEventListener('mouseout', function() {
-        this.style.textDecoration = 'none';
-    });
-
-    followingLink.addEventListener('click', function() {
-        window.location.href = "{% url 'following' profile.user.username %}";
-    });
-
-    function likePost(postId) {
-        // Submit the form with corresponding post id
-        document.getElementById('likeForm' + postId).submit();
-    }
-
-    function deletePost(postId) {
-        // Display confirmation pop-up
-        var confirmDelete = confirm('Are you sure you want to delete this post?');
-        
-        // If user confirms deletion, submit the form
-        if (confirmDelete) {
-            document.getElementById('deleteForm' + postId).submit();
-        }
-    }
-
-    // Add event listeners to delete buttons
-    var deleteButtons = document.querySelectorAll('.delete-btn');
-    deleteButtons.forEach(function(button) {
-        button.addEventListener('click', function() {
-            var postId = this.getAttribute('data-post-id');
-            deletePost(postId);
-        });
-    });
-
-
-    document.getElementById('delete-img').addEventListener('mouseover', function() {
-        this.src = "{% static 'Linkfeed/deleting.svg' %}";
-    });
-    
-    document.getElementById('delete-img').addEventListener('mouseout', function() {
-        this.src = "{% static 'Linkfeed/delete.svg' %}";
-    });
-
-    function rePostPost(postId) {
-        // Submit the form with corresponding post id
-        document.getElementById('shareForm' + postId).submit();
-    }
-</script>
+    {% if not posts %}
+        <p>No posts yet</p>
+    {% endif %}
 
 {% endblock %}

@@ -1,0 +1,86 @@
+body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    max-width:40em;
+    font-size: 11pt;
+    margin: 0 auto;
+    padding-right: .5em;
+    padding-left: .5em;
+    overflow-x: hidden;
+    overflow-y: scroll; /* Turns the scrollbar always on */
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    overflow-wrap:anywhere;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.post a:visited {
+    color: #666;
+}
+
+button a {
+    white-space: nowrap;
+}
+
+button a:hover {
+    text-decoration: none;
+}
+
+.small {
+    font-size: smaller;
+}
+
+.grey {
+    color: #666;
+}
+
+.red {
+    color: #EA322E;
+}
+
+.text-end {
+    text-align: right !important;
+}
+
+input, textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+input[type="radio"] {
+    width:fit-content;
+}
+
+.preserve {
+    white-space: pre-wrap;
+}
+
+.active {
+    color: #EA322E;
+}
+
+.underline {
+    text-decoration: underline;
+}
+
+.ellipsis {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.unread {
+    background-color: #f3f3f3;
+}
+
+@media screen and (max-width: 440px){
+    nav {
+        font-size: smaller;
+    }
+}

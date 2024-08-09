@@ -1,0 +1,52 @@
+{% extends "Linkfeed/layouts.html" %}
+
+{% block name %}
+    {{ profile.display_name }}
+{% endblock %}
+
+{% block body %}
+    <h2>
+        Post via RSS feeds
+    </h2>
+    <p class="mb-0"> RSS Feed URL</p>
+    <form method="post" action="{% url 'mirror_rss_feed' %}" class="d-flex justify-content-between">
+        {% csrf_token %}
+        
+        <input type="url" name="link" value="https://" required>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if rss_feeds %}
+    <h3>Current active RSS feeds</h3>
+        {% for feed in rss_feeds %}
+            <div class="d-flex justify-content-between align-items-center">
+                <p class="ellipsis mt-0">
+                    <a class="red small" href="{{ feed.link }}" target="_blank">{{ feed.link }}</a>
+                </p>
+                <form class="m-0" method="post" action="{% url 'delete_rss_feed' feed.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Delete</button>
+                </form>
+            </div>
+        {% endfor %}
+        <button><a href="{% url 'refresh_mirrored_rss_feed' %}">Refresh now</a></button>
+    {% endif %}
+    <p class="small grey d-flex justify-content-center">
+        ** All active RSS feeds automatically update every 3 hours **
+    </p>
+
+    <h2>
+        Consume via RSS feeds
+    </h2>
+    <p>
+        /Feed
+    </p>
+    <a class="small red" href="{% url 'feed_rss' profile.user.username %}">{{ request.scheme }}://{{ request.get_host }}{% url 'feed_rss' profile.user.username %}</a>
+
+    <p>
+        /Notifications
+    </p>
+    <a class="small red" href="{% url 'notifications_rss' profile.user.username %}">{{ request.scheme }}://{{ request.get_host }}{% url 'notifications_rss' profile.user.username %}</a>
+
+{% endblock %}

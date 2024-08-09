@@ -1,0 +1,4 @@
+<a href="{% url 'profile' profile.user.username %}" {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'current_user_profile'  %}class="active"{% endif %}>Profile</a> |
+<a href="{% url 'feed' profile.user.username %}" {% if request.resolver_match.url_name == 'feed' %}class="active"{% endif %}>Feed</a> | 
+<a href="{% url 'landing' %}" {% if request.resolver_match.url_name == 'landing' %}class="active"{% endif %}>Home</a> | 
+<a href="{% url 'login' %}">Login</a>

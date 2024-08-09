@@ -1,0 +1,44 @@
+{% load custom_filters %}
+
+{% for comment in comments %}
+    <div class="mb-4" style="margin-left: {{ comment.level }}em;">
+        <p class="small grey mb-0">
+            {% if comment.user %}
+            <a href="{% url 'profile' comment.user.username %}" target="_blank">
+                {{ comment.display_name }}
+            </a> •
+            {% else %}
+                {{ comment.display_name }} •
+            {% endif %}
+
+            {{ comment.timestamp|smart_date|capfirst }}
+            {% if request.user == comment.user %}
+                • <a href="{% url 'edit_comment' comment.id %}">edit</a>
+            {% endif %}
+            {% if request.user == comment.user or request.user == post.user %}
+                • <a href="{% url 'delete_comment' comment.id %}">delete</a>
+            {% endif %}
+        </p>
+        <p class="mb-0 mt-1 preserve">{{ comment.body }}</p>
+        <p class="small mt-1 underline">
+            <a href="#" onclick="unhideForm({{ comment.id }})">reply</a>
+        </p>
+
+        <form id="{{comment.id}}" method="post" action="{% url 'reply_comment' comment.id %}" hidden>
+            {% csrf_token %}
+                {% if not request.user.is_authenticated %}
+                    <input name="display_name" placeholder="Name" required>
+                {% endif %}
+                <textarea name="body" rows="4" placeholder="Add a reply..."required></textarea>
+                <button type="submit">
+                    Post
+                </button>
+        </form>
+
+        {% with replies=comment.replies.all %}
+            {% if replies %}
+                {% include "Linkfeed/comments.html" with comments=replies %}
+            {% endif %}
+        {% endwith %}
+    </div>
+{% endfor %}

@@ -1,259 +1,47 @@
 {% extends "Linkfeed/layouts.html" %}
-{% load static %}
 
-{% block styles %}
-
-<style>
-    .child-comment {
-        margin-left: 40px;
-        /* Adjust this value to your preference */
-    }
-    .comment-container {
-        border:none;
-        background-color: transparent;
-    }
-</style>
-
-
+{% block name %}
+    {{ profile.display_name }}
 {% endblock %}
 
 {% block nav %}
-<a href="{% url 'current_user_feed'%}" class="">Feed</a>
-<a href="{% url 'current_user_profile'%}" class="">Profile</a>
+    {% if not request.user.is_authenticated %}
+        {% include 'Linkfeed/logged_out_nav.html' %}
+    {% endif %}
 {% endblock %}
 
-
-
 {% block body %}
-<!-- Move the "Posted by Lime" section outside the card and center it -->
-<div id="posts" class="mt-5">
-    <div class="">
-        {% if post %}
-        {% include 'Linkfeed/posts.html' %}
-        {% endif %}
-    </div>
-</div>
-<div class="container-fluid">
-    <div class="row pt-5 pb-3 border-bottom">
-        <div class="col">
-            <form id="addCommentForm" method="post" action="{% url 'add_comment' post.id %}">
-                {% csrf_token %}
-                <div class="form-group round">
-                    <textarea class="form-control round" name="comment_body" rows="4" placeholder="Add a comment..."
-                        required></textarea>
-                </div>
-                <button type="submit" class="btn red-button normal-font-button">
-                    Post
-                </button>
-            </form>
-        </div>
-    </div>
-    
+    <h2>
+        Post
+    </h2>
 
-    <!-- Comments section -->
+    {% if post %}
+        <div>{% include 'Linkfeed/posts.html' %}</div>
+    {% endif %}
 
-        <div class="comments-dropdown comment-border">
-            <!-- Render comments here -->
-            <div class="scrollable-comments">
-                {% for comment in post.comments.all %}
-                {% if not comment.parent_comment %}
-                <div class="card comment-container border-bottom" id="comment-{{ comment.id}}">
-                    <div class="my-1">
-                        <div class="comment-info">
-                            <div class="row">
-                                <div class="col-12">
-                                    <a href="{% url 'profile' comment.user.username %}" class="wrapped-profile-link">    
-                                        <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small truncate-text" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ comment.user.profile.display_name }} ({{ comment.user.alloweddomain.domain|slice:"8:" }})</span></p>
-                                    </a>
-                                </div>
-                            </div>
-                            <p class="comment-body">{{ comment.body }}</p>
-                            <div class="row">
-                                {% if request.user == post.user or request.user == comment.user %}
-                                <div class="col post-actions d-flex justify-content-end align-items-end">
-                                    <!-- <a href="{% url 'delete_comment' comment.id %}">
-                                        <img src="{% static 'Linkfeed/delete.svg' %}" style="float: right;" alt="repost" class="svg" width="32" height="32" fill="black" viewBox="0 0 32 32">
-                                    </a> -->
-                                    <img src="{% static 'Linkfeed/delete.svg' %}" alt="Delete" class="delete-btn2 svg mb-1" data-post-id="{{ comment.id }}"
-                                        width="28" height="28" fill="black" class="bi bi-trash" viewBox="0 0 32 32">
-                                </div>
-                                {% endif %}
-                                <div class="col-12 text-muted text-right small">
-                                    {{ comment.timestamp|date:"b j, Y g:i a"|capfirst }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Comments</h2>
+        <p class="underline small">
+            <a href="{% url 'comments_by_date' profile.user.username post.timestamp|date:'Y-m-d' %}?id={{ id }}">Embed as iframe</a>
+        </p>
+    </div>
+    <form method="post" action="{% url 'add_comment' post.id %}">
+        {% csrf_token %}
+            {% if not request.user.is_authenticated %}
+                <input name="display_name" placeholder="Name" required>
             {% endif %}
-            <!-- Nested replies section -->
-            {% for reply in comment.replies.all %}
-            <div class="card comment-container border-bottom border-left child-comment">
-                <div class="my-3">
-                    <p id="posted-by-{{ post.id }}" class="mb-0 text-muted post-user small truncate-text" style="cursor: pointer;"><span class="username-link" data-username="{{ post.user.username }}">{{ reply.user.profile.display_name }} ({{ reply.user.alloweddomain.domain|slice:"8:" }}) — {{comment.timestamp }}</span></p>
-                    <p class="comment-body">{{ reply.body }}</p>
-                    <!-- Add delete button for reply with confirmation -->
-                    {% if request.user == post.user or request.user == reply.user %}
-                    <form id="deleteCommentForm{{ reply.id }}" action="{% url 'delete_comment' reply.id %}"
-                        method="post">
-                        {% csrf_token %}
-                        <div class="button-group">
-                            <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ reply.id }}')">
-                                <img src="{% static 'Linkfeed/trashcan.svg' %}" width="22" height="22" fill="black"
-                                    viewBox="0 0 22 22">
-                            </button>
-                        </div>
-                        </form>
-                            <button class="btn btn-primary reply-button">
-                                <img src="{% static 'Linkfeed\reply.svg' %}" width="22" height="22"
-                                    fill="black" viewBox="0 0 22 22"><!-- Reply icon -->
-                            </button>
-                    {% endif %}
-                    <form class="reply-form" method="post" action="{% url 'add_comment' post_id=post.id %}"
-                        style="margin-left: 20px; display: none;">
-                        {% csrf_token %}
-                        <input type="hidden" name="parent_comment_id" value="{{ reply.parent_comment.id }}">
-                        <textarea name="comment_body"></textarea>
-                        <button type="submit">
-                            <img src="{% static 'Linkfeed/send.svg' %}" width="22" height="22" fill="black"
-                                    viewBox="0 0 22 22"><!-- Send icon -->
-                        </button>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
-            {% empty %}
-            <p>No comments yet.</p>
-            {% endfor %}
-        </div>
-</div>
-<script>
-    // On dom
-    document.addEventListener('DOMContentLoaded', function() {
-    
-        function deletePost(postId, commentId, button) {
-            // Display confirmation pop-up
-            var confirmDelete = confirm('Are you sure you want to delete this post?');
-        
-            // If user confirms deletion, submit the form
-            if (confirmDelete) {
-                // Make a get request to 
-                var xhr = new XMLHttpRequest();
-                var url = "{% url 'delete_comment' 0 %}".replace('0', postId);
-                xhr.open('GET', url, true);
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
-                xhr.send();
-        
-                // Remove the post from the DOM
-                var post = document.getElementById('comment-' + postId);
-                post.remove();
-            }
-        }
-            // Add event listeners to delete buttons
-            var deleteButtons = document.querySelectorAll('.delete-btn2');
-            deleteButtons.forEach(function(button) {
-                button.addEventListener('click', function() {
-                    var postId = this.getAttribute('data-post-id');
-                    deletePost(postId);
-                });
-            });
-    });
-    
-    </script>
+            <textarea name="body" rows="4" placeholder="Add a comment..."required></textarea>
+            <button type="submit">
+                Comment
+            </button>
+    </form>
 
-    <!-- Edit post popup form -->
-    <div id="editPostPopup" class="modal" style="display: none;">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Post</h5>
-                    <button type="button" class="close" onclick="toggleEditPostPopup()">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="editPostForm" method="post" action="{% url 'edit_post' post.id %}">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label for="post_title">Title:</label>
-                            <input type="text" class="form-control" name="post_title" value="{{ post.title }}">
-                        </div>
-                        <div class="form-group">
-                            <label for="post_body">Body:</label>
-                            <textarea class="form-control" name="post_body" rows="10">{{ post.body }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success">Save</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% include 'Linkfeed/comments.html' with comments=comments %}
 
-    <!-- Add comment popup form -->
-    <div id="addCommentPopup" class="modal" style="display: none;">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Comment</h5>
-                    <button type="button" class="close" onclick="toggleAddCommentPopup()">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="addCommentForm" method="post" action="{% url 'add_comment' post.id %}">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label for="comment_body">Comment:</label>
-                            <textarea class="form-control" name="comment_body" rows="4" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <img src="{% static 'Linkfeed/send.svg' %}" width="26" height="26" fill="black"
-                                viewBox="0 0 26 26"><!-- Add icon for submit button -->   
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- JavaScript to toggle edit post popup -->
     <script>
-        // Function to toggle edit post popup
-        function toggleEditPostPopup() {
-            var popup = document.getElementById("editPostPopup");
-            if (popup.style.display === "none") {
-                popup.style.display = "block";
-            } else {
-                popup.style.display = "none";
-            }
+        function unhideForm(comment_id) {
+            document.getElementById(comment_id).hidden = false;
         }
-
-        // Function to toggle add comment popup
-        function toggleAddCommentPopup() {
-            var popup = document.getElementById("addCommentPopup");
-            if (popup.style.display === "none") {
-                popup.style.display = "block";
-            } else {
-                popup.style.display = "none";
-            }
-        }
-
-        // Function to confirm delete before submitting delete form
-        function confirmDelete(commentId) {
-            if (confirm("Are you sure you want to delete this comment?")) {
-                document.getElementById("deleteCommentForm" + commentId).submit();
-            }
-        }
-
-        // jQuery to toggle reply form
-        $(document).ready(function () {
-            $('.reply-button').click(function () {
-                $(this).siblings('.reply-form').toggle();
-            });
-        });
     </script>
 
-    {% endblock body %}
+{% endblock %}

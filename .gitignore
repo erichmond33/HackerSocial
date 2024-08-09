@@ -1,0 +1,6 @@
+Linkfeed/keys.env
+keys2.env
+uwsgi.ini
+uwsgi.pid
+uwsgi.log
+db.sqlite3
