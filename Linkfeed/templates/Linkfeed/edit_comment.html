@@ -1,0 +1,31 @@
+{% extends "Linkfeed/layouts.html" %}
+
+{% block name %}
+    {{ profile.display_name }}
+{% endblock %}
+
+{% block body %}
+    <h2>
+        Edit comment
+    </h2>
+
+    {% if comment.post %}
+        {% include 'Linkfeed/posts.html' with post=comment.post %}
+    {% endif %}
+
+    <form method="post" action="{% url 'edit_comment' comment.id %}">
+        {% csrf_token %}
+        <textarea name="body" rows="4" required>{{ comment.body }}</textarea>
+        <button type="submit">Update</button>
+    </form>
+
+    <h2>
+        Delete comment
+    </h2>
+
+    <form method="post" action="{% url 'delete_comment' comment.id %}">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+    </form>
+
+{% endblock %}

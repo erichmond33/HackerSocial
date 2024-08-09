@@ -1,9 +1,0 @@
-<!-- {% elif user.is_authenticated %}
-                <h1 id="username-header" class="header">
-                    <a href="{% url 'profile' profile.user.username %}">{{ profile.user.username }}</a>
-                </h1>
-                {% else %}
-                    <h1 id="username-header" class="header">
-                        <a href="{% url 'index' %}">Linkfeed</a>
-                    </h1>
-                {% endif %} -->

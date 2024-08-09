@@ -1,0 +1,35 @@
+{% extends "Linkfeed/layouts.html" %}
+
+{% block name %}
+    {{ profile.display_name }}
+{% endblock %}
+
+{% block body %}
+    <h2>Edit Profile</h2>
+    <form method="post" action="{% url 'edit_profile' %}">
+        {% csrf_token %}
+        <label>Profile Link</label>
+        <small class="small grey">({{ profile.domain }})</small>
+        <input type="url" name="link">
+
+        <label>Display Name</label>
+        <small class="small grey">({{ profile.display_name }})</small>
+        <input type="text" name="display_name">
+
+        <label>Username </label>
+        <small class="small grey">({{ profile.user.username }})</small>
+        <input type="text" name="username">
+        
+        <label>Email</label>
+        <small class="small grey">({{ profile.user.email }})</small>
+        <input type="email" name="email">
+    
+        <button type="submit" class="mt-2">Save</button>
+    </form>
+
+    <h2>Log Out</h2>
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="mt-2">Log Out</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "Linkfeed/layouts_iframe.html" %}
+
+{% block body %}
+
+    <h2 class="mt-4">Comments</h2>
+
+    <form method="post" action="{% url 'add_comment' post.id %}">
+        {% csrf_token %}
+            {% if not request.user.is_authenticated %}
+                <input name="display_name" placeholder="Name" required>
+            {% endif %}
+            <textarea name="body" rows="4" placeholder="Add a comment..."required></textarea>
+            <button type="submit">
+                Comment
+            </button>
+    </form>
+
+    {% include 'Linkfeed/comments.html' with comments=comments %}
+
+    <script>
+        function unhideForm(comment_id) {
+            document.getElementById(comment_id).hidden = false;
+        }
+    </script>
+
+    <style>
+        body {
+            overflow-y: auto;
+            max-width:none;
+            margin: 0;
+            padding: 0;
+        }
+        @media(prefers-color-scheme:dark){
+            body {
+                color: white;
+            }
+        }
+    </style>
+
+{% endblock %}

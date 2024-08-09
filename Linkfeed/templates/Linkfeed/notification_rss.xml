@@ -1,0 +1,9 @@
+<entry>
+<id>{{ notification.id }}</id>
+<link href="{{ request.scheme }}://{{ request.get_host }}{% url 'post' notification.post.id %}"/>
+<title>{{ notification.display_name }} • {{ notification.post.title }}</title>
+<published>{{ notification.timestamp|date:"Y-m-d\TH:i:s\Z" }}</published>
+<content type="html">
+        <p>{{ notification.body }}</p>
+</content>
+</entry>

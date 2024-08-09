@@ -1,0 +1,32 @@
+{% extends "Linkfeed/layouts.html" %}
+
+{% block name %}
+    {{ profile.display_name }}
+{% endblock %}
+
+{% block body %}
+    <h2>
+        Edit post
+    </h2>
+
+    {% if post %}
+        {% include 'Linkfeed/posts.html' %}
+    {% endif %}
+
+    <form method="post" action="{% url 'edit_post' post.id %}">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="Title" value="{{ post.title }}">
+        <input type="url" name="body" placeholder="URL" value="{{ post.body }}">
+        <button type="submit">Update</button>
+    </form>
+
+    <h2>
+        Delete post
+    </h2>
+
+    <form method="post" action="{% url 'delete_post' post.id %}">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+    </form>
+
+{% endblock %}

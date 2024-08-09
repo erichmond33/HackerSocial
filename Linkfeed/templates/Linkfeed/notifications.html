@@ -1,0 +1,74 @@
+{% extends "Linkfeed/layouts.html" %}
+{% load custom_filters %}
+
+{% block name %}
+    {{ profile.display_name }}
+{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Notifications</h2>
+        <p class="underline small">
+            <a href="{% url 'notifications_rss' profile.user.username %}">View as RSS</a>
+        </p>
+    </div>
+
+    {% for comment in notifications %}
+        <div class="mb-4 {% if not comment.read %}unread{% endif %}">
+            <p class="small grey my-0">
+                {% if comment.user %}
+                <a href="{% url 'profile' comment.user.username %}" target="_blank">
+                    {{ comment.display_name }}
+                </a> •
+                {% else %}
+                    {{ comment.display_name }} •
+                {% endif %}
+                
+                {{ comment.timestamp|smart_date|capfirst }} • 
+                <a href="{% url 'post' comment.post.id %}">
+                    {{ comment.post.title }}
+                </a>
+            </p>
+            <p class="mb-0 mt-1 preserve">{{ comment.body }}</p>
+            <p class="small mt-1 underline">
+                <a href="#" onclick="unhideForm({{ comment.id }})">reply</a>
+            </p>
+        
+            <form id="{{comment.id}}" method="post" action="{% url 'reply_comment' comment.id %}" hidden>
+                {% csrf_token %}
+                    <textarea name="body" rows="4" placeholder="Add a reply..."required></textarea>
+                    <button type="submit">
+                        Post
+                    </button>
+            </form>
+        
+            <script>
+                function unhideForm(comment_id) {
+                    document.getElementById(comment_id).hidden = false;
+                }
+            </script>
+        </div>
+    {% endfor %}
+
+    {% if not notifications %}
+        <p>No notifications yet.</p>
+    {% endif %}
+
+    <script>
+        function mark_notification_as_read(userID) {
+            var csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+            fetch(`/Linkfeed/mark_notification_as_read/${userID}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => { console.log(data); });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mark_notification_as_read(`{{ profile.user.username }}`);
+        });
+    </script>
+{% endblock %}

@@ -7,31 +7,29 @@
 
 {% block body %}
 
-<div class="container-fluid">
-  <div class="form-container">
-    {% if message %}
-      <div class="alert alert-info">{{message}}</div>
-    {% endif %}
-    
-    <form action="{% url 'login' %}" method="post">
-      {% csrf_token %}
-      <h3>Login</h3>
-      <div class="form-group">
-        <input type="text" autofocus class="form-control" name="username" placeholder="Username">
-      </div>
-      <!-- <div class="form-group">
+
+  {% if message %}
+  <div class="alert alert-info">{{message}}</div>
+  {% endif %}
+  
+  <form action="{% url 'login' %}" method="post">
+    {% csrf_token %}
+    <h2>Login</h2>
+    <div class="form-group">
+      <input type="text" autofocus class="form-control" name="email_or_username" placeholder="Email or Username">
+    </div>
+    <!-- <div class="form-group">
         <input type="text" class="form-control" name="website" placeholder="Personal website URL">
       </div> -->
-      <div class="form-group">
-        <input type="password" class="form-control" name="password" placeholder="Password">
-      </div>
-      <div class="form-group">
-        <button type="submit" class="normal-font-button btn red-button">Submit</button>
-      </div>
-    </form>
-    Don't have an account?
-    <a href=" {% url 'register' %} "> Register here.</a>
-  </div>
-</div>
+    <div class="form-group">
+      <input type="password" class="form-control" name="password" placeholder="Password">
+    </div>
+    <div class="form-group">
+      <button type="submit" class="normal-font-button btn red-button">Submit</button>
+    </div>
+  </form>
+  Don't have an account?
+  <a class="red" href=" {% url 'register' %} "> Register here.</a>
+
 
 {% endblock %}

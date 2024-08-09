@@ -1,0 +1,8 @@
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Feed ({{ profile.display_name}})</title>
+
+{% for post in posts %}
+    {% include 'Linkfeed/posts_rss.xml' %}
+{% endfor %}
+
+</feed>

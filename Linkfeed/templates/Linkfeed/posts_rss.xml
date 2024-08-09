@@ -1,0 +1,21 @@
+<entry>
+<id>{{ post.id }}</id>
+<link href="{{ post.body }}"/>
+<title>{{ post.title }}</title>
+<published>{{ post.timestamp|date:"Y-m-d\TH:i:s\Z" }}</published>
+<content type="html">
+        <a href="{% url 'profile' post.user.username %}" target="_blank">
+            {{ post.user.profile.display_name }}
+        </a> • 
+
+        <a href="{% url 'post' post.id %}">
+            comments ({{post.total_comments}})
+        </a> • 
+
+        <a href="#">
+            likes ({{post.total_likes}})
+        </a> • 
+
+        <a href="{{ post.body }}" target="_blank">{{ post.body }}</a>
+</content>
+</entry>

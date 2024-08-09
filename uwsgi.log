@@ -1,0 +1,2 @@
+[pid: 81193|app: 0|req: 6/6] 69.162.124.238 () {52 vars in 761 bytes} [Thu Aug  8 21:39:55 2024] HEAD / => generated 2500 bytes in 5 msecs (HTTP/1.1 200) 9 headers in 438 bytes (2 switches on core 0)
+[pid: 81193|app: 0|req: 7/7] 173.218.143.154 () {64 vars in 1154 bytes} [Thu Aug  8 21:39:55 2024] GET / => generated 2500 bytes in 4 msecs (HTTP/1.1 200) 9 headers in 438 bytes (2 switches on core 0)
